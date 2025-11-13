@@ -13,36 +13,33 @@ import {
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import { AddShoppingCart } from "@mui/icons-material";
-import { useCart } from "../hook/useCart"; // ✅ Thêm dòng này
+import { useCart } from "../hook/useCart"; 
 
 export default function ProductCard({ product }) {
   const theme = useTheme();
-  const { addToCart } = useCart(); // ✅ Lấy hàm thêm giỏ từ hook
+  const { addToCart } = useCart(); 
 
   const title = product?.title || product?.name || "Sản phẩm";
   const price = product?.price || 0;
   const author = product?.author;
   const hasBackendId = Boolean(product?._id);
   const imageUrl = hasBackendId
-    ? `/api/blob/thumbnail/${product._id}`
+    ? `/api/blob/thumbnailPublic/${product._id}`
     : product?.image || "https://via.placeholder.com/300x300?text=No+Image";
   const detailHref = hasBackendId ? `/ebook/${product._id}` : "#";
 
-  // ✅ Xử lý khi nhấn thêm giỏ hàng
+  //  Xử lý khi nhấn thêm giỏ hàng
   const handleAddToCart = (e) => {
     e.stopPropagation();
     e.preventDefault();
     if (!hasBackendId) return;
 
     addToCart({
-      id: product._id || product.id,
-      name: title,
+      _id: product._id,
+      title: title,
       price: price,
-      image: imageUrl,
+      thumbnail: imageUrl,
     });
-
-    // 👉 Thông báo nhỏ (nếu bạn có popup)
-    // alert(`${title} đã được thêm vào giỏ hàng!`);
   };
 
   return (

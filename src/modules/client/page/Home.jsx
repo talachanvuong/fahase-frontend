@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Box,
   Grid,
@@ -44,6 +44,7 @@ export default function Home() {
   const [page, setPage] = useState(1);
   const pageSize = 12; // (Thay đổi) Thường là 12 (3x4) hoặc 16 (4x4)
   const [total, setTotal] = useState(0);
+  const categoriesLoaded = useRef(false);
 
   // Load categories (Giữ nguyên)
   useEffect(() => {
@@ -53,15 +54,19 @@ export default function Home() {
         const cats = catRes.data?.result || [];
         setCategories(cats);
         // Tự động chọn tab đầu tiên khi tải xong
-        if (cats.length > 0 && !selectedCategory) {
+        if (cats.length > 0) {
           setSelectedCategory(cats[0]._id);
         }
       } catch {
         setCategories([]);
       }
     };
-    loadCategories();
-  },); // Chỉ chạy 1 lần
+    
+    if (!categoriesLoaded.current) {
+      loadCategories();
+      categoriesLoaded.current = true;
+    }
+  }, []); // Chỉ chạy 1 lần khi component mount
 
   // Load products (Giữ nguyên logic)
   useEffect(() => {
@@ -77,9 +82,17 @@ export default function Home() {
         const prodRes = await api.get(`/product/getAllByCategory/${selectedCategory}`, {
           params: { page, limit: pageSize },
         });
-        const data = prodRes.data?.result || {};
-        setProducts(data.items || []);
-        setTotal(data.total || 0);
+        // API returns { status, result: [...items] } or { status, result: { items, total } }
+        const result = prodRes.data?.result || [];
+        if (Array.isArray(result)) {
+          // If result is array directly
+          setProducts(result);
+          setTotal(result.length || 0);
+        } else {
+          // If result is object with items and total
+          setProducts(result.items || []);
+          setTotal(result.total || 0);
+        }
       } catch {
         setProducts([]);
         setTotal(0);

@@ -42,15 +42,29 @@ function ProtectedRoute({ children }) {
 }
 
 function AppRoutes() {
+  const { user, loading } = useAuth();
+
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route element={<ClientLayout />}>
-        <Route path="/" element={<Home />} />
-        <Route path="/categories" element={<Category />} />
-        <Route path="/ebook/:id" element={<EbookDetail />} />
+        {/* If still loading auth, show loading. If logged in, show Home. Otherwise redirect to /login */}
+        <Route
+          index
+          element={
+            loading ? (
+              <div>Đang tải...</div>
+            ) : user ? (
+              <Home />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route path="categories" element={<Category />} />
+        <Route path="ebook/:id" element={<EbookDetail />} />
         {/* Make cart public */}
-        <Route path="/cart" element={<Cart />} />
+        <Route path="cart" element={<Cart />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
