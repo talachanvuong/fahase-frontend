@@ -78,17 +78,17 @@ export default function EbookDetail() {
 
   const displayName = product.title || product.name;
   const price = product.price || 0;
-  const image = product.thumbnail || `/api/blob/thumbnail/${product._id}`;
+  const image = product.thumbnail || `/api/blob/thumbnailPublic/${product._id}`;
   const description = product.description || "";
   const stock = product.stock || 0;
   const isInStock = stock > 0;
 
   const handleAdd = () => {
     addToCart({
-      id: product._id || product.id,
-      name: displayName,
+      _id: product._id,
+      title: displayName,
       price: price,
-      image: image,
+      thumbnail: image,
     });
   };
 

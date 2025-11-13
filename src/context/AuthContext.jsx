@@ -7,6 +7,7 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Load session user from backend if available
@@ -17,8 +18,10 @@ export const AuthProvider = ({ children }) => {
         if (res.data?.result) {
           setUser(res.data.result);
         }
-      } catch (_) {
+      } catch {
         // not logged in or error -> ignore
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -38,21 +41,27 @@ export const AuthProvider = ({ children }) => {
     if (disableLogin) return;
 
     // Redirect to backend passport login flow
-    const backend = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+    // Prefer explicit VITE_BACKEND_URL. If not provided, derive backend origin from VITE_API_URL
+    // (VITE_API_URL is expected to include the /api path). This avoids defaulting to the
+    // frontend origin (localhost:3000) which would break the OAuth flow.
+    const backend =
+      import.meta.env.VITE_BACKEND_URL ||
+      (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/i, '') : 'http://localhost:5000');
+
     window.location.href = `${backend}/api/passport/login`;
   };
 
   const logout = async () => {
     try {
       await api.post("/user/logout");
-    } catch (_) {
+    } catch {
       // ignore
     }
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

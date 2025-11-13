@@ -17,10 +17,10 @@ import { useNavigate } from "react-router-dom"; // Dùng để chuyển trang ch
 
 // Component Riêng cho từng Sản phẩm trong giỏ hàng (Không có nút +/-)
 const CartItemDisplay = ({ item, removeFromCart, theme }) => {
-  // Tính tổng phụ: LƯU Ý: Nếu hook useCart không lưu quantity, item.quantity sẽ là undefined.
-  // Giả sử item.quantity LUÔN LUÔN là 1 nếu hook của bạn không quản lý số lượng.
-  const quantity = item.quantity || 1;
-  const subtotal = item.price * quantity; 
+  // Backend returns: { _id, title, price, thumbnail }
+  // quantity luôn là 1 từ backend (không support multiple quantities)
+  const quantity = 1;
+  const subtotal = item.price * quantity;
   
   return (
     <Box
@@ -38,8 +38,8 @@ const CartItemDisplay = ({ item, removeFromCart, theme }) => {
       {/* 1. Hình ảnh & Thông tin sản phẩm */}
       <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
         <img
-          src={item.image}
-          alt={item.name}
+          src={item.thumbnail}
+          alt={item.title}
           style={{ 
             width: 90, 
             height: 90, 
@@ -49,10 +49,8 @@ const CartItemDisplay = ({ item, removeFromCart, theme }) => {
           }}
         />
         <Box>
-          <Typography fontWeight="bold" noWrap>{item.name}</Typography>
+          <Typography fontWeight="bold" noWrap>{item.title}</Typography>
           <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 0.5 }}>
-            {/* Sửa lỗi hiển thị Quantity nếu có */}
-            {quantity > 1 && <Box component="span" fontWeight="bold">{quantity} x </Box>}
             {item.price.toLocaleString()} ₫
           </Typography>
         </Box>
@@ -63,7 +61,7 @@ const CartItemDisplay = ({ item, removeFromCart, theme }) => {
         <Typography fontWeight="bold" color="primary.main" sx={{ minWidth: 100, textAlign: 'right' }}>
             {subtotal.toLocaleString()} ₫
         </Typography>
-        <IconButton color="error" size="medium" onClick={() => removeFromCart(item.id)}>
+        <IconButton color="error" size="medium" onClick={() => removeFromCart(item._id)}>
             <Delete />
         </IconButton>
       </Box>
@@ -77,8 +75,8 @@ export default function Cart() {
   const navigate = useNavigate();
   const theme = useTheme();
 
-  // SỬA LỖI LOGIC TÍNH TỔNG (Nhân với item.quantity)
-  const subTotal = cartItems.reduce((sum, item) => sum + item.price * (item.quantity || 1), 0);
+  // Backend returns items with quantity = 1 always. Calculate total without quantity multiplier.
+  const subTotal = cartItems.reduce((sum, item) => sum + (item.price || 0), 0);
   
   // Logic phụ cho tóm tắt đơn hàng 
   const total = subTotal;
@@ -105,7 +103,7 @@ export default function Cart() {
           <Box>
             {cartItems.map((item) => (
               <CartItemDisplay 
-                key={item.id} 
+                key={item._id} 
                 item={item} 
                 removeFromCart={removeFromCart} 
                 theme={theme}
