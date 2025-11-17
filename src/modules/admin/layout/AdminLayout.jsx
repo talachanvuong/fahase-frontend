@@ -1,33 +1,58 @@
 import React from "react";
-import { Link, Outlet } from "react-router-dom";
-import { Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import MenuBookIcon from "@mui/icons-material/MenuBook";
+import { Outlet, Link, useLocation } from "react-router-dom";
+import { AppBar, Toolbar, Button, Box, Typography } from "@mui/material";
+
+const menuItems = [
+  { label: "Đơn hàng", path: "orders" },
+  { label: "Sản phẩm", path: "products" },
+  { label: "Loại sản phẩm", path: "categories" },
+];
 
 export default function AdminLayout() {
+  const location = useLocation();
+
   return (
-    <div style={{ display: "flex" }}>
-      <Drawer variant="permanent" sx={{ width: 240 }}>
-        <List>
-          <ListItem disablePadding>
-            <ListItemButton component={Link} to="/admin/dashboard">
-              <ListItemIcon><DashboardIcon /></ListItemIcon>
-              <ListItemText primary="Dashboard" />
-            </ListItemButton>
-          </ListItem>
+    <Box>
+      {/* AppBar Menu Ngang */}
+      <AppBar position="static">
+        <Toolbar>
+          {/* Click quay về dashboard */}
+          <Typography
+            variant="h6"
+            component={Link}
+            to="/admin/dashboard"
+            sx={{
+              flexGrow: 1,
+              color: "inherit",
+              textDecoration: "none",
+              cursor: "pointer",
+            }}
+          >
+            Administrator
+          </Typography>
 
-          <ListItem disablePadding>
-            <ListItemButton component={Link} to="/admin/manage-books">
-              <ListItemIcon><MenuBookIcon /></ListItemIcon>
-              <ListItemText primary="Quản lý sách" />
-            </ListItemButton>
-          </ListItem>
-        </List>
-      </Drawer>
+          {menuItems.map((item) => (
+            <Button
+              key={item.path}
+              color="inherit"
+              component={Link}
+              to={`/admin/${item.path}`} // đường dẫn tuyệt đối
+              sx={{
+                textDecoration: location.pathname.includes(item.path)
+                  ? "underline"
+                  : "none",
+              }}
+            >
+              {item.label}
+            </Button>
+          ))}
+        </Toolbar>
+      </AppBar>
 
-      <main style={{ flexGrow: 1, padding: 24 }}>
+      {/* Nội dung chính */}
+      <Box sx={{ padding: 3 }}>
         <Outlet />
-      </main>
-    </div>
+      </Box>
+    </Box>
   );
 }
