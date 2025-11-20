@@ -11,6 +11,7 @@ import {
   Alert,
   useTheme
 } from "@mui/material";
+import PayPalCheckout from "../../../components/paypal/PayPalCheckout";
 import { Delete, ShoppingCartCheckout } from "@mui/icons-material";
 import { useCart } from "../../../hook/useCart";
 import { useNavigate } from "react-router-dom"; // Dùng để chuyển trang checkout
@@ -167,6 +168,15 @@ export default function Cart() {
               Tiến hành thanh toán
             </Button>
             
+              <Box sx={{ mt: 3 }}>
+                <PayPalCheckout
+                  onSuccess={() => {
+                    clearCart();
+                    navigate("/success");
+                  }}
+                />
+              </Box>
+
             {/* Nút Tiếp tục mua sắm */}
             <Button
               variant="text"
@@ -177,6 +187,7 @@ export default function Cart() {
             >
               Tiếp tục mua sắm
             </Button>
+             
           </Box>
         </Grid>
       </Grid>
