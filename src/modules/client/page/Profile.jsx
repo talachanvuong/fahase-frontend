@@ -30,18 +30,16 @@ import { useAuth } from "../../../hook/useAuth";
 import api from "../../../services/api";
 import { useLocation, useNavigate } from "react-router-dom";
 
-// ============ TAB 1: THÔNG TIN USER ============
+// ============ THÔNG TIN USER ============
 const UserInfoTab = ({ user }) => (
   <Paper elevation={2} sx={{ p: 4, borderRadius: 3 }}>
     <Stack spacing={4} alignItems="center">
-      {/* Avatar lớn */}
       <Avatar
         src={user.photo_url}
         alt={user.display_name}
         sx={{ width: 140, height: 140, boxShadow: 3 }}
       />
       
-      {/* Tên và Email */}
       <Box textAlign="center">
         <Typography variant="h4" fontWeight="bold" gutterBottom>
           {user.display_name}
@@ -63,10 +61,9 @@ const UserInfoTab = ({ user }) => (
 
       <Divider sx={{ width: '100%' }} />
 
-      {/* Thông tin chi tiết */}
       <Box sx={{ width: '100%', maxWidth: 500 }}>
         <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ mb: 2 }}>
-          📋 Thông tin tài khoản
+           Thông tin tài khoản
         </Typography>
         
         <List>
@@ -135,10 +132,13 @@ const UserInfoTab = ({ user }) => (
   </Paper>
 );
 
-// ============ TAB 2: ĐƠN HÀNG ============
+// ============ ĐƠN HÀNG ============
 const OrdersTab = () => {
   const [orders, setOrders] = useState([]);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [orderDetail, setOrderDetail] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   useEffect(() => {
     const loadOrders = async () => {
@@ -156,24 +156,38 @@ const OrdersTab = () => {
     loadOrders();
   }, []);
 
-  const getStatusColor = (status) => {
-    const statusMap = {
-      pending: "warning",
-      completed: "success",
-      cancelled: "error",
-      processing: "info"
-    };
-    return statusMap[status] || "default";
+  const loadOrderDetail = async (orderId) => {
+    setDetailLoading(true);
+    try {
+      const res = await api.get(`/order/getDetail/${orderId}`);
+      if (res.data.status === 200) {
+        setOrderDetail(res.data.result);
+      }
+    } catch (error) {
+      console.error("Load order detail error:", error);
+    } finally {
+      setDetailLoading(false);
+    }
   };
 
-  const getStatusText = (status) => {
-    const textMap = {
-      pending: "Chờ xử lý",
-      completed: "Hoàn thành",
-      cancelled: "Đã hủy",
-      processing: "Đang xử lý"
+  const handleOrderClick = (order) => {
+    setSelectedOrder(order);
+    loadOrderDetail(order._id);
+  };
+
+  const handleBackToList = () => {
+    setSelectedOrder(null);
+    setOrderDetail(null);
+  };
+
+  const getStatusColor = (state) => {
+    const statusMap = {
+      "Thành công": "success",
+      "Thất bại": "error",
+      "Đang xử lý": "info",
+      "Chờ xử lý": "warning"
     };
-    return textMap[status] || "Không rõ";
+    return statusMap[state] || "default";
   };
 
   if (loading) {
@@ -209,13 +223,147 @@ const OrdersTab = () => {
     );
   }
 
+  // Hiển thị chi tiết đơn hàng
+  if (selectedOrder && orderDetail) {
+    const totalPrice = orderDetail.orderItems?.reduce((sum, item) => sum + item.price, 0) || 0;
+    
+    return (
+      <Box>
+        <Button 
+          startIcon={<Receipt />} 
+          onClick={handleBackToList}
+          sx={{ mb: 3 }}
+        >
+          Quay lại danh sách
+        </Button>
+
+        <Card variant="outlined" sx={{ borderRadius: 2 }}>
+          <CardContent>
+            {/* Header */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Mã đơn hàng
+                </Typography>
+                <Typography variant="h5" fontWeight="bold">
+                  #{orderDetail._id.slice(-8).toUpperCase()}
+                </Typography>
+              </Box>
+              <Chip 
+                label={orderDetail.state} 
+                color={getStatusColor(orderDetail.state)}
+                size="large"
+              />
+            </Box>
+
+            <Divider sx={{ my: 3 }} />
+
+            {/* Thông tin đơn hàng */}
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h6" fontWeight="bold" gutterBottom>
+                Thông tin đơn hàng
+              </Typography>
+              <Grid container spacing={2} sx={{ mt: 1 }}>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="text.secondary">
+                    Ngày đặt hàng
+                  </Typography>
+                  <Typography variant="body1" fontWeight="medium">
+                    {orderDetail.created_at}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="text.secondary">
+                    Tổng tiền
+                  </Typography>
+                  <Typography variant="h6" fontWeight="bold" color="primary.main">
+                    {totalPrice.toLocaleString()} ₫
+                  </Typography>
+                </Grid>
+              </Grid>
+            </Box>
+
+            <Divider sx={{ my: 3 }} />
+
+            {/* Danh sách sản phẩm */}
+            <Box>
+              <Typography variant="h6" fontWeight="bold" gutterBottom>
+                Sản phẩm ({orderDetail.orderItems?.length || 0})
+              </Typography>
+              
+              <Stack spacing={2} sx={{ mt: 2 }}>
+                {orderDetail.orderItems?.map((item) => (
+                  <Box 
+                    key={item._id}
+                    sx={{ 
+                      display: 'flex',
+                      gap: 2,
+                      p: 2,
+                      bgcolor: 'grey.50',
+                      borderRadius: 2
+                    }}
+                  >
+                    <Box
+                      component="img"
+                      src={item.thumbnail}
+                      alt={item.title}
+                      sx={{
+                        width: 100,
+                        height: 100,
+                        objectFit: 'cover',
+                        borderRadius: 1,
+                        bgcolor: 'grey.200'
+                      }}
+                    />
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="subtitle1" fontWeight="bold">
+                        {item.title}
+                      </Typography>
+                      <Typography variant="h6" color="primary.main" fontWeight="bold" sx={{ mt: 1 }}>
+                        {item.price.toLocaleString()} ₫
+                      </Typography>
+                      {orderDetail.state === "Thành công" && item.file && (
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          href={item.file}
+                          download
+                          sx={{ mt: 1 }}
+                        >
+                          Tải xuống
+                        </Button>
+                      )}
+                    </Box>
+                  </Box>
+                ))}
+              </Stack>
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
+    );
+  }
+
+  // Hiển thị danh sách đơn hàng
   return (
     <Stack spacing={2}>
       {orders.map((order) => (
-        <Card key={order._id} variant="outlined" sx={{ borderRadius: 2 }}>
+        <Card 
+          key={order._id} 
+          variant="outlined" 
+          sx={{ 
+            borderRadius: 2,
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+            '&:hover': {
+              boxShadow: 4,
+              transform: 'translateY(-2px)'
+            }
+          }}
+          onClick={() => handleOrderClick(order)}
+        >
           <CardContent>
-            {/* Header: Mã đơn + Trạng thái */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Box>
                 <Typography variant="caption" color="text.secondary">
                   Mã đơn hàng
@@ -223,65 +371,22 @@ const OrdersTab = () => {
                 <Typography variant="h6" fontWeight="bold">
                   #{order._id.slice(-8).toUpperCase()}
                 </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  {order.created_at}
+                </Typography>
               </Box>
               <Chip 
-                label={getStatusText(order.status)} 
-                color={getStatusColor(order.status)}
+                label={order.state} 
+                color={getStatusColor(order.state)}
                 size="medium"
               />
             </Box>
-
-            <Divider sx={{ my: 2 }} />
-
-            {/* Thông tin đơn hàng */}
-            <Grid container spacing={2}>
-              <Grid item xs={6}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  📅 Ngày đặt
-                </Typography>
-                <Typography variant="body1" fontWeight="medium">
-                  {new Date(order.createdAt).toLocaleDateString('vi-VN', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </Typography>
-              </Grid>
-              <Grid item xs={6}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  💰 Tổng tiền
-                </Typography>
-                <Typography variant="h6" fontWeight="bold" color="primary.main">
-                  {order.total?.toLocaleString()} ₫
-                </Typography>
-              </Grid>
-            </Grid>
-
-            {/* Danh sách sản phẩm */}
-            {order.items && order.items.length > 0 && (
-              <Box sx={{ mt: 3, p: 2, bgcolor: 'grey.50', borderRadius: 2 }}>
-                <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                  📦 Sản phẩm ({order.items.length})
-                </Typography>
-                {order.items.slice(0, 3).map((item, idx) => (
-                  <Typography key={idx} variant="body2" sx={{ mt: 0.5 }}>
-                    • {item.title || item.product_name}
-                  </Typography>
-                ))}
-                {order.items.length > 3 && (
-                  <Typography variant="body2" color="primary" sx={{ mt: 1, fontStyle: 'italic' }}>
-                    ... và {order.items.length - 3} sản phẩm khác
-                  </Typography>
-                )}
-              </Box>
-            )}
           </CardContent>
         </Card>
       ))}
     </Stack>
   );
 };
-
 // ============ TAB 3: SẢN PHẨM ĐÃ MUA ============
 const PurchasedProductsTab = () => {
   const [products, setProducts] = useState([]);

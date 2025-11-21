@@ -1,16 +1,13 @@
 import React, { createContext, useState, useEffect } from "react";
 import api from "../services/api";
 
-// Tạo Context
 export const AuthContext = createContext(undefined);
 
-// Provider Component
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load session user from backend if available
     const loadMe = async () => {
       try {
         const res = await api.get("/user/me");
@@ -26,7 +23,6 @@ export const AuthProvider = ({ children }) => {
 
     loadMe();
 
-    // Hỗ trợ demo login
     const handleDemo = (e) => {
       setUser({ ...e.detail, token: "demo" });
       setLoading(false);
@@ -36,13 +32,11 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = () => {
-    // Allow disabling redirect for debugging
     const disableLogin = typeof window !== 'undefined' && 
       window.localStorage?.getItem('DISABLE_LOGIN_FLOW') === '1';
     
     if (disableLogin) return;
 
-    // Redirect to backend passport login flow
     const backend =
       import.meta.env.VITE_BACKEND_URL ||
       (import.meta.env.VITE_API_URL 

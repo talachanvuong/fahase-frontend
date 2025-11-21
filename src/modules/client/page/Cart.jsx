@@ -14,12 +14,9 @@ import {
 import PayPalCheckout from "../../../components/paypal/PayPalCheckout";
 import { Delete, ShoppingCartCheckout } from "@mui/icons-material";
 import { useCart } from "../../../hook/useCart";
-import { useNavigate } from "react-router-dom"; // Dùng để chuyển trang checkout
+import { useNavigate } from "react-router-dom"; 
 
-// Component Riêng cho từng Sản phẩm trong giỏ hàng (Không có nút +/-)
 const CartItemDisplay = ({ item, removeFromCart, theme }) => {
-  // Backend returns: { _id, title, price, thumbnail }
-  // quantity luôn là 1 từ backend (không support multiple quantities)
   const quantity = 1;
   const subtotal = item.price * quantity;
   
@@ -36,7 +33,7 @@ const CartItemDisplay = ({ item, removeFromCart, theme }) => {
         gap: 2,
       }}
     >
-      {/* 1. Hình ảnh & Thông tin sản phẩm */}
+      {/*Hình ảnh & Thông tin sản phẩm */}
       <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
         <img
           src={item.thumbnail}
@@ -57,7 +54,7 @@ const CartItemDisplay = ({ item, removeFromCart, theme }) => {
         </Box>
       </Box>
 
-      {/* 2. Tổng phụ & Xóa */}
+      {/*Tổng phụ & Xóa */}
       <Box sx={{ display: "flex", alignItems: 'center', gap: 1 }}>
         <Typography fontWeight="bold" color="primary.main" sx={{ minWidth: 100, textAlign: 'right' }}>
             {subtotal.toLocaleString()} ₫
@@ -71,21 +68,18 @@ const CartItemDisplay = ({ item, removeFromCart, theme }) => {
 };
 
 export default function Cart() {
-  // Đã xóa updateQuantity để phù hợp với code gốc mới nhất
   const { cartItems, removeFromCart, clearCart } = useCart(); 
   const navigate = useNavigate();
   const theme = useTheme();
 
-  // Backend returns items with quantity = 1 always. Calculate total without quantity multiplier.
   const subTotal = cartItems.reduce((sum, item) => sum + (item.price || 0), 0);
   
-  // Logic phụ cho tóm tắt đơn hàng 
   const total = subTotal;
 
   if (cartItems.length === 0)
     return (
         <Container maxWidth="md" sx={{ py: 6, textAlign: 'center' }}>
-            <Typography variant="h5" mb={2}>Giỏ hàng của bạn đang trống. 😟</Typography>
+            <Typography variant="h5" mb={2}>Giỏ hàng của bạn đang trống.</Typography>
             <Button variant="contained" onClick={() => navigate('/')}>
                 Tiếp tục mua sắm
             </Button>
@@ -162,20 +156,20 @@ export default function Cart() {
               size="large"
               fullWidth
               startIcon={<ShoppingCartCheckout />}
-              // onClick={() => navigate('/checkout')} 
+             onClick={() => navigate('/Checkout')} 
               sx={{ py: 1.5, fontWeight: 'bold' }}
             >
               Tiến hành thanh toán
             </Button>
             
-              <Box sx={{ mt: 3 }}>
+              {/* <Box sx={{ mt: 3 }}>
                 <PayPalCheckout
                   onSuccess={() => {
                     clearCart();
                     navigate("/success");
                   }}
                 />
-              </Box>
+              </Box> */}
 
             {/* Nút Tiếp tục mua sắm */}
             <Button

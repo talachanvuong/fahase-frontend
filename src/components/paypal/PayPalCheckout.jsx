@@ -26,19 +26,6 @@ export default function PayPalCheckout({ onSuccess }) {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  // Kiểm tra client ID
-  if (!clientId || clientId === "undefined") {
-    return (
-      <Alert severity="error" sx={{ mt: 2 }}>
-        <strong>Lỗi cấu hình PayPal</strong>
-        <br />
-        Không tìm thấy VITE_PAYPAL_CLIENT_ID trong file .env
-        <br />
-        <small>Hãy tạo file .env và thêm: VITE_PAYPAL_CLIENT_ID=your_client_id</small>
-      </Alert>
-    );
-  }
-
   const initialOptions = {
     clientId: clientId,
     currency: "USD",

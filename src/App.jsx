@@ -14,7 +14,7 @@ import Category from './modules/client/page/Category';
 import EbookDetail from './modules/client/page/EbookDetail';
 import Cart from './modules/client/page/Cart';
 import Login from './modules/client/page/Login';
-import OrderSuccess from './modules/client/page/OrderSuccess';
+import Checkout from './modules/client/page/Checkout';
 import Profile from './modules/client/page/profile';
 
 const theme = createTheme({
@@ -28,7 +28,6 @@ const theme = createTheme({
   },
 });
 
-// Protected Route Component
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   
@@ -67,14 +66,13 @@ function AppRoutes() {
         <Route path="categories" element={<Category />} />
         <Route path="ebook/:id" element={<EbookDetail />} />
         <Route path="cart" element={<Cart />} />
-        <Route path="/order/success" element={<OrderSuccess />} />
+        <Route path="checkout" element={<Checkout />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
 
-// ✅ Cấu trúc đúng: AuthProvider bao ngoài AppRoutes
 function App() {
   return (
     <ThemeProvider theme={theme}>
