@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import {Box, Typography, Grid, Button, Container, Divider, Skeleton, useTheme, Stack, Alert, TextField, Card, CardContent, Avatar, Rating, Paper, Chip,} from "@mui/material";
+import {Box, Typography, Grid, Button, Container, Divider, Skeleton, useTheme, Stack, Alert, TextField, Card, CardContent, Avatar, Paper, Chip,} from "@mui/material";
 import { useCart } from "../../../hook/useCart";
 import { useAuth } from "../../../hook/useAuth";
 import api from "../../../services/api";
@@ -47,9 +47,6 @@ const CommentItem = ({ comment }) => (
             )}
           </Box>
           
-          {comment.rating && (
-            <Rating value={comment.rating} readOnly size="small" sx={{ mb: 1 }} />
-          )}
           
           <Typography variant="body2" color="text.primary" sx={{ mb: 1 }}>
             {comment.content}
@@ -86,7 +83,6 @@ export default function EbookDetail() {
   
   // State cho comment form
   const [commentText, setCommentText] = useState("");
-  const [rating, setRating] = useState(5);
   const [submitting, setSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState({ type: "", text: "" });
 
@@ -163,13 +159,12 @@ export default function EbookDetail() {
       const res = await api.post("/comment/add", {
         product: id,
         content: commentText,
-        rating: rating,
       });
 
       if (res.data.status === 200) {
         setSubmitMessage({ type: "success", text: "Đánh giá của bạn đã được gửi!" });
         setCommentText("");
-        setRating(5);
+
         
         // Reload comments
         const commentsRes = await api.get(`/comment/getAllByProduct/${id}`);
@@ -331,17 +326,6 @@ export default function EbookDetail() {
               <Typography variant="h6" fontWeight="bold" mb={2}>
                 Viết đánh giá của bạn
               </Typography>
-
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="body2" color="text.secondary" mb={1}>
-                  Đánh giá của bạn:
-                </Typography>
-                <Rating
-                  value={rating}
-                  onChange={(event, newValue) => setRating(newValue)}
-                  size="large"
-                />
-              </Box>
 
               <TextField
                 fullWidth

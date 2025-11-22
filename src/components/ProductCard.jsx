@@ -1,17 +1,4 @@
-import React from "react";
-import {
-  Card,
-  CardMedia,
-  CardContent,
-  Typography,
-  Button,
-  Box,
-  CardActionArea,
-  CardActions,
-  useTheme,
-  alpha,
-  Stack,
-} from "@mui/material";
+import { Card, CardMedia, CardContent, Typography, Button, Box, CardActionArea, CardActions, useTheme, alpha, Stack} from "@mui/material";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { AddShoppingCart, ShoppingCartCheckout } from "@mui/icons-material";
 import { useCart } from "../hook/useCart";
@@ -30,7 +17,7 @@ export default function ProductCard({ product }) {
     : product?.image || "https://via.placeholder.com/300x300?text=No+Image";
   const detailHref = hasBackendId ? `/ebook/${product._id}` : "#";
 
-  // ✅ Xử lý thêm giỏ hàng
+  // Xử lý thêm giỏ hàng
   const handleAddToCart = (e) => {
     e.stopPropagation();
     e.preventDefault();
@@ -44,7 +31,7 @@ export default function ProductCard({ product }) {
     });
   };
 
-  // ✅ Xử lý "Mua ngay" - Chuyển sang trang checkout
+  // Xử lý "Mua ngay" - Chuyển sang trang checkout
   const handleBuyNow = (e) => {
     e.stopPropagation();
     e.preventDefault();
@@ -66,7 +53,7 @@ export default function ProductCard({ product }) {
     <Card
       sx={{
         width: 240,
-        height: 400, // ✅ Tăng chiều cao để chứa 2 nút
+        height: 400,
         display: "flex",
         flexDirection: "column",
         border: `1px solid ${theme.palette.divider}`,
@@ -160,7 +147,6 @@ export default function ProductCard({ product }) {
         </CardContent>
       </CardActionArea>
 
-      {/* ✅ 2 nút: Mua ngay + Thêm giỏ */}
       <CardActions sx={{ p: 1.5, pt: 0 }}>
         <Stack spacing={1} sx={{ width: "100%" }}>
           {/* Nút Mua ngay */}

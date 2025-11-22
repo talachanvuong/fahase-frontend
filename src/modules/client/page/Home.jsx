@@ -158,10 +158,9 @@ export default function Home() {
           </Tabs>
         </Box>
 
-        {/*Logic render theo trạng thái */}
-        { (loading && products.length === 0) ? renderLoading()  // Chỉ Skeletons khi tải lần đầu
-          : (!loading && products.length === 0) ? renderEmpty() // Trạng thái rỗng
-          : renderProductList() // Hiển thị danh sách
+        { (loading && products.length === 0) ? renderLoading()  
+          : (!loading && products.length === 0) ? renderEmpty() 
+          : renderProductList() 
         }
        
         {loading && products.length > 0 && (

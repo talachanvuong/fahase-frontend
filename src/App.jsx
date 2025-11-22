@@ -63,7 +63,7 @@ function AppRoutes() {
           }
         />
         <Route path="/profile" element={<Profile />} />
-        <Route path="categories" element={<Category />} />
+        {/* <Route path="categories" element={<Category />} /> */}
         <Route path="ebook/:id" element={<EbookDetail />} />
         <Route path="cart" element={<Cart />} />
         <Route path="checkout" element={<Checkout />} />

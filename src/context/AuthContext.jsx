@@ -38,12 +38,8 @@ export const AuthProvider = ({ children }) => {
     if (disableLogin) return;
 
     const backend =
-      import.meta.env.VITE_BACKEND_URL ||
-      (import.meta.env.VITE_API_URL 
-        ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/i, '') 
-        : 'http://localhost:5000');
-
-    window.location.href = `${backend}/api/passport/login`;
+      import.meta.env.VITE_BACKEND_URL
+      window.location.href = `${backend}/api/passport/login`;
   };
 
   const logout = async () => {

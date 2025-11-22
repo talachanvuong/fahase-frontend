@@ -1,27 +1,6 @@
 import React, { useState } from "react";
-import {
-  AppBar,
-  Toolbar,
-  Typography,
-  Box,
-  InputBase,
-  IconButton,
-  Badge,
-  Avatar,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
-  Divider
-} from "@mui/material";
-import {
-  ShoppingCart,
-  Search,
-  Person,
-  Receipt,
-  ShoppingBag,
-  Logout
-} from "@mui/icons-material";
+import {AppBar, Toolbar, Typography, Box, InputBase, IconButton, Badge, Avatar, Menu, MenuItem, ListItemIcon, ListItemText, Divider} from "@mui/material";
+import {ShoppingCart, Search, Person, Receipt, ShoppingBag, Logout} from "@mui/icons-material";
 import { useCart } from "../hook/useCart";
 import { useAuth } from "../hook/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -93,16 +72,13 @@ export default function Topbar() {
           <InputBase fullWidth placeholder="Tìm kiếm sản phẩm..." />
         </Box>
 
-        {/* Right Side Icons */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          {/* Shopping Cart */}
           <IconButton color="primary" onClick={() => navigate("/cart")}>
             <Badge badgeContent={uniqueCount} color="error">
               <ShoppingCart />
             </Badge>
           </IconButton>
 
-          {/* User Avatar / Login Button */}
           {user ? (
             <>
               <IconButton onClick={handleMenuOpen} sx={{ p: 0.5 }}>
@@ -113,7 +89,6 @@ export default function Topbar() {
                 />
               </IconButton>
 
-              {/* Dropdown Menu */}
               <Menu
                 anchorEl={anchorEl}
                 open={open}
@@ -129,7 +104,7 @@ export default function Topbar() {
                   }
                 }}
               >
-                {/* User Info Header */}
+
                 <Box sx={{ px: 2, py: 1.5, bgcolor: "grey.50" }}>
                   <Typography variant="subtitle1" fontWeight="bold" noWrap>
                     {user.display_name}
@@ -141,7 +116,6 @@ export default function Topbar() {
 
                 <Divider />
 
-                {/* Menu Items */}
                 <MenuItem onClick={handleProfile}>
                   <ListItemIcon>
                     <Person fontSize="small" color="primary" />

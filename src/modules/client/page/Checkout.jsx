@@ -1,19 +1,5 @@
 import React, { useEffect } from "react";
-import {
-  Container,
-  Box,
-  Typography,
-  Paper,
-  Grid,
-  Divider,
-  Stack,
-  Button,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
-  Avatar,
-} from "@mui/material";
+import {Container, Box, Typography, Paper, Grid, Divider, Stack, Button, List, ListItem, ListItemAvatar, ListItemText, Avatar,} from "@mui/material";
 import { ArrowBack, ShoppingCart } from "@mui/icons-material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useCart } from "../../../hook/useCart";
@@ -76,7 +62,7 @@ export default function Checkout() {
       </Box>
 
       <Grid container spacing={4}>
-        {/* Cột trái: Danh sách sản phẩm */}
+        {/*Danh sách sản phẩm */}
         <Grid item xs={12} md={7}>
           <Paper sx={{ p: 3, borderRadius: 2 }}>
             <Typography variant="h6" fontWeight="bold" gutterBottom>
@@ -118,7 +104,7 @@ export default function Checkout() {
           </Paper>
         </Grid>
 
-        {/* Cột phải: Tóm tắt & Thanh toán */}
+        {/* Tóm tắt, Thanh toán */}
         <Grid item xs={12} md={5}>
           <Paper
             sx={{
