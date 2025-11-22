@@ -1,32 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import {
-  Box,
-  Typography,
-  Grid,
-  Button,
-  Container, // (MỚI) Dùng Container để căn giữa và giới hạn chiều rộng
-  Divider, // (MỚI) Để phân chia nội dung rõ ràng
-  Skeleton, // (MỚI) Cho hiệu ứng tải trang
-  useTheme,
-  Stack,
-  Rating, // (MỚI) Thêm rating để tăng độ tin cậy
-  Alert
-} from "@mui/material";
+import { useParams, useNavigate } from "react-router-dom";
+import {Box, Typography, Grid, Button, Container, Divider, Skeleton, useTheme, Stack, Alert, TextField, Card, CardContent, Avatar, Paper, Chip,} from "@mui/material";
 import { useCart } from "../../../hook/useCart";
+import { useAuth } from "../../../hook/useAuth";
 import api from "../../../services/api";
-import { AddShoppingCart, FavoriteBorder } from "@mui/icons-material"; // Icons
+import {AddShoppingCart, ShoppingCartCheckout, Send, VerifiedUser } from "@mui/icons-material";
 
-// (MỚI) Mock data cho các trường nâng cao
-const mockAdditionalInfo = {
-  author: "Tác giả Demo",
-  publisher: "Nhà xuất bản A",
-  rating: 4.5,
-  reviews: 120,
-  stock: 5,
-};
-
-// (MỚI) Component Skeleton cho trang chi tiết
 const DetailSkeleton = () => (
   <Grid container spacing={4}>
     <Grid item md={6} xs={12}>
@@ -35,7 +14,6 @@ const DetailSkeleton = () => (
     <Grid item md={6} xs={12}>
       <Skeleton height={50} width="80%" sx={{ mb: 2 }} />
       <Skeleton height={20} width="50%" sx={{ mb: 1 }} />
-      <Stack direction="row" spacing={1} sx={{ mb: 2 }}><Skeleton width={100} height={20} /></Stack>
       <Divider sx={{ my: 2 }} />
       <Skeleton height={60} width="40%" sx={{ mb: 3 }} />
       <Skeleton variant="rectangular" height={56} width="100%" />
@@ -44,22 +22,78 @@ const DetailSkeleton = () => (
   </Grid>
 );
 
+const CommentItem = ({ comment }) => (
+  <Card variant="outlined" sx={{ mb: 2 }}>
+    <CardContent>
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+        <Avatar 
+          src={comment.user?.photo_url} 
+          alt={comment.user?.display_name}
+          sx={{ width: 48, height: 48 }}
+        />
+        <Box sx={{ flex: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+            <Typography variant="subtitle2" fontWeight="bold">
+              {comment.user?.display_name || "Người dùng"}
+            </Typography>
+            {comment.hasPurchased && (
+              <Chip 
+                icon={<VerifiedUser />}
+                label="Đã mua" 
+                size="small" 
+                color="success" 
+                variant="outlined"
+              />
+            )}
+          </Box>
+          
+          
+          <Typography variant="body2" color="text.primary" sx={{ mb: 1 }}>
+            {comment.content}
+          </Typography>
+          
+          <Typography variant="caption" color="text.secondary">
+            {new Date(comment.created_at).toLocaleDateString('vi-VN', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </Typography>
+        </Box>
+      </Box>
+    </CardContent>
+  </Card>
+);
+
 export default function EbookDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { addToCart } = useCart();
-  const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
   const theme = useTheme();
 
-  // Load product data (Giữ nguyên logic)
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [comments, setComments] = useState([]);
+  const [commentsLoading, setCommentsLoading] = useState(true);
+  const [hasPurchased, setHasPurchased] = useState(false);
+  const [checkingPurchase, setCheckingPurchase] = useState(true);
+  
+  // State cho comment form
+  const [commentText, setCommentText] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState({ type: "", text: "" });
+
+  // Load product data
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       try {
         const res = await api.get(`/product/getById/${id}`);
         const data = res.data?.result;
-        // Gán thêm mock info nếu cần
-        if (data) setProduct({ ...data, ...mockAdditionalInfo }); 
+        if (data) setProduct(data);
       } catch {
         setProduct(null);
       } finally {
@@ -69,50 +103,152 @@ export default function EbookDetail() {
     load();
   }, [id]);
 
-  if (loading) return <Container maxWidth="lg" sx={{ py: 4 }}><DetailSkeleton /></Container>;
-  if (!product) return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Alert severity="error">Không tìm thấy sản phẩm này hoặc sản phẩm đã bị xóa.</Alert>
-    </Container>
-  );
+  // Load comments
+  useEffect(() => {
+    const loadComments = async () => {
+      setCommentsLoading(true);
+      try {
+        const res = await api.get(`/comment/getAllByProduct/${id}`);
+        if (res.data.status === 200) {
+          setComments(res.data.result || []);
+        }
+      } catch (error) {
+        console.error("Load comments error:", error);
+      } finally {
+        setCommentsLoading(false);
+      }
+    };
+    loadComments();
+  }, [id]);
 
-  const displayName = product.title || product.name;
-  const price = product.price || 0;
-  const image = product.thumbnail || `/api/blob/thumbnailPublic/${product._id}`;
-  const description = product.description || "";
-  const stock = product.stock || 0;
-  const isInStock = stock > 0;
+  // Check if user has purchased
+  useEffect(() => {
+    const checkPurchase = async () => {
+      if (!user) {
+        setCheckingPurchase(false);
+        return;
+      }
 
-  const handleAdd = () => {
+      setCheckingPurchase(true);
+      try {
+        const res = await api.get(`/bought/isBought/${id}`);
+        if (res.data.status === 200) {
+          setHasPurchased(res.data.result === true);
+        }
+      } catch (error) {
+        console.error("Check purchase error:", error);
+        setHasPurchased(false);
+      } finally {
+        setCheckingPurchase(false);
+      }
+    };
+    checkPurchase();
+  }, [id, user]);
+
+  // Submit comment
+  const handleSubmitComment = async () => {
+    if (!commentText.trim()) {
+      setSubmitMessage({ type: "error", text: "Vui lòng nhập nội dung đánh giá" });
+      return;
+    }
+
+    setSubmitting(true);
+    setSubmitMessage({ type: "", text: "" });
+
+    try {
+      const res = await api.post("/comment/add", {
+        product: id,
+        content: commentText,
+      });
+
+      if (res.data.status === 200) {
+        setSubmitMessage({ type: "success", text: "Đánh giá của bạn đã được gửi!" });
+        setCommentText("");
+
+        
+        // Reload comments
+        const commentsRes = await api.get(`/comment/getAllByProduct/${id}`);
+        if (commentsRes.data.status === 200) {
+          setComments(commentsRes.data.result || []);
+        }
+      } else {
+        setSubmitMessage({ type: "error", text: res.data.result || "Có lỗi xảy ra" });
+      }
+    } catch (error) {
+      console.error("Submit comment error:", error);
+      setSubmitMessage({ 
+        type: "error", 
+        text: error.response?.data?.result || "Không thể gửi đánh giá" 
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleAddToCart = () => {
     addToCart({
       _id: product._id,
-      title: displayName,
-      price: price,
-      thumbnail: image,
+      title: product.title,
+      price: product.price,
+      thumbnail: `/api/blob/thumbnailPublic/${product._id}`,
     });
   };
 
+  const handleBuyNow = () => {
+    navigate("/checkout", {
+      state: {
+        product: {
+          _id: product._id,
+          title: product.title,
+          price: product.price,
+          thumbnail: `/api/blob/thumbnailPublic/${product._id}`,
+        },
+      },
+    });
+  };
+
+  if (loading) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <DetailSkeleton />
+      </Container>
+    );
+  }
+
+  if (!product) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Alert severity="error">
+          Không tìm thấy sản phẩm này hoặc sản phẩm đã bị xóa.
+        </Alert>
+      </Container>
+    );
+  }
+
+  const displayName = product.title || product.name;
+  const price = product.price || 0;
+  const image = `/api/blob/thumbnailPublic/${product._id}`;
+  const description = product.description || "Chưa có mô tả cho sản phẩm này.";
+
   return (
-    // (MỚI) Dùng Container để căn giữa
     <Container maxWidth="lg" sx={{ py: 5 }}>
       <Grid container spacing={5}>
         {/* === CỘT 1: HÌNH ẢNH === */}
         <Grid item md={6} xs={12}>
-          {/* (MỚI) Thiết kế ảnh nổi bật hơn */}
-          <Box 
+          <Box
             sx={{
-              position: 'sticky',
-              top: theme.spacing(2), // Giữ ảnh cố định khi cuộn
-              aspectRatio: '1/1', // Đảm bảo hình vuông
-              overflow: 'hidden',
+              position: "sticky",
+              top: theme.spacing(2),
+              aspectRatio: "1/1",
+              overflow: "hidden",
               borderRadius: 3,
-              boxShadow: 3, // Bóng đổ nhẹ nhàng
+              boxShadow: 3,
             }}
           >
-            <img 
-              src={image} 
-              alt={displayName} 
-              style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+            <img
+              src={image}
+              alt={displayName}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />
           </Box>
         </Grid>
@@ -124,8 +260,6 @@ export default function EbookDetail() {
             {displayName}
           </Typography>
 
-
-          {/* Đường phân chia */}
           <Divider sx={{ my: 2 }} />
 
           {/* Giá */}
@@ -133,23 +267,32 @@ export default function EbookDetail() {
             {price.toLocaleString()} ₫
           </Typography>
 
-          {/* === NÚT HÀNH ĐỘNG CTA Đôi (MỚI) === */}
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 4 }}>
+          {/* === NÚT HÀNH ĐỘNG === */}
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 4 }}>
             <Button
               variant="contained"
               color="primary"
               size="large"
-              startIcon={<AddShoppingCart />}
-              onClick={handleAdd}
+              startIcon={<ShoppingCartCheckout />}
+              onClick={handleBuyNow}
               fullWidth
-              disabled={!isInStock}
-              sx={{ py: 1.5, fontWeight: 'bold' }} // Nút to, nổi bật
+              sx={{ py: 1.5, fontWeight: "bold" }}
             >
-              Thêm vào giỏ hàng
+              Mua ngay
+            </Button>
+            <Button
+              variant="outlined"
+              color="primary"
+              size="large"
+              startIcon={<AddShoppingCart />}
+              onClick={handleAddToCart}
+              fullWidth
+              sx={{ py: 1.5, fontWeight: "bold" }}
+            >
+              Thêm vào giỏ
             </Button>
           </Stack>
 
-          {/* Đường phân chia */}
           <Divider sx={{ my: 3 }} />
 
           {/* Mô tả sản phẩm */}
@@ -158,21 +301,104 @@ export default function EbookDetail() {
           </Typography>
           <Typography
             variant="body1"
-            sx={{ 
-              color: 'text.primary', 
+            sx={{
+              color: "text.primary",
               lineHeight: 1.6,
-              // Giới hạn chiều cao cho đoạn mô tả dài
-              maxHeight: 300, 
-              overflowY: 'auto',
+              maxHeight: 300,
+              overflowY: "auto",
             }}
           >
             {description}
           </Typography>
-          
-          {/* Bạn có thể thêm các Tab cho Chi tiết kỹ thuật / Đánh giá ở đây */}
-          
         </Grid>
       </Grid>
+
+      {/* === PHẦN ĐÁNH GIÁ === */}
+      <Box sx={{ mt: 6 }}>
+        <Typography variant="h5" fontWeight="bold" mb={3}>
+          Đánh giá sản phẩm
+        </Typography>
+
+        {/* Form đánh giá */}
+        {user ? (
+          hasPurchased ? (
+            <Paper elevation={2} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
+              <Typography variant="h6" fontWeight="bold" mb={2}>
+                Viết đánh giá của bạn
+              </Typography>
+
+              <TextField
+                fullWidth
+                multiline
+                rows={4}
+                placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                disabled={submitting}
+                sx={{ mb: 2 }}
+              />
+
+              {submitMessage.text && (
+                <Alert severity={submitMessage.type} sx={{ mb: 2 }}>
+                  {submitMessage.text}
+                </Alert>
+              )}
+
+              <Button
+                variant="contained"
+                startIcon={<Send />}
+                onClick={handleSubmitComment}
+                disabled={submitting}
+              >
+                {submitting ? "Đang gửi..." : "Gửi đánh giá"}
+              </Button>
+            </Paper>
+          ) : checkingPurchase ? (
+            <Alert severity="info" sx={{ mb: 4 }}>
+              Đang kiểm tra...
+            </Alert>
+          ) : (
+            <Alert severity="warning" sx={{ mb: 4 }}>
+              Bạn cần mua sản phẩm này để có thể đánh giá.
+            </Alert>
+          )
+        ) : (
+          <Alert severity="info" sx={{ mb: 4 }}>
+            Vui lòng <Button onClick={() => navigate("/login")}>đăng nhập</Button> để
+            đánh giá sản phẩm.
+          </Alert>
+        )}
+
+        {/* Danh sách đánh giá */}
+        <Box>
+          <Typography variant="h6" fontWeight="bold" mb={2}>
+            Đánh giá từ khách hàng ({comments.length})
+          </Typography>
+
+          {commentsLoading ? (
+            <Stack spacing={2}>
+              {[1, 2, 3].map((i) => (
+                <Card key={i} variant="outlined">
+                  <CardContent>
+                    <Skeleton width="40%" height={30} />
+                    <Skeleton width="100%" height={60} sx={{ mt: 1 }} />
+                  </CardContent>
+                </Card>
+              ))}
+            </Stack>
+          ) : comments.length === 0 ? (
+            <Alert severity="info">
+              Chưa có đánh giá nào cho sản phẩm này. Hãy là người đầu tiên!
+            </Alert>
+          ) : (
+            <Box>
+              {comments.map((comment) => (
+                <CommentItem key={comment._id} comment={comment} />
+              ))}
+            </Box>
+          )}
+        </Box>
+      </Box>
     </Container>
   );
 }

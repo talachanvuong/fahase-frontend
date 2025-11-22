@@ -14,6 +14,8 @@ import Category from './modules/client/page/Category';
 import EbookDetail from './modules/client/page/EbookDetail';
 import Cart from './modules/client/page/Cart';
 import Login from './modules/client/page/Login';
+import Checkout from './modules/client/page/Checkout';
+import Profile from './modules/client/page/profile';
 
 const theme = createTheme({
   palette: {
@@ -26,7 +28,6 @@ const theme = createTheme({
   },
 });
 
-// Protected Route Component
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   
@@ -41,6 +42,7 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
+
 function AppRoutes() {
   const { user, loading } = useAuth();
 
@@ -48,7 +50,6 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route element={<ClientLayout />}>
-        {/* If still loading auth, show loading. If logged in, show Home. Otherwise redirect to /login */}
         <Route
           index
           element={
@@ -61,10 +62,11 @@ function AppRoutes() {
             )
           }
         />
-        <Route path="categories" element={<Category />} />
+        <Route path="/profile" element={<Profile />} />
+        {/* <Route path="categories" element={<Category />} /> */}
         <Route path="ebook/:id" element={<EbookDetail />} />
-        {/* Make cart public */}
         <Route path="cart" element={<Cart />} />
+        <Route path="checkout" element={<Checkout />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

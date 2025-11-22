@@ -18,7 +18,6 @@ export const CartProvider = ({ children }) => {
         setCartItems(res.data.result.products);
       }
     } catch (err) {
-      // If 401, user is not logged in — that's expected
       if (err.response?.status !== 401) {
         setError(err.message || "Lỗi tải giỏ hàng");
       }
@@ -38,7 +37,6 @@ export const CartProvider = ({ children }) => {
       const productId = product._id || product.id;
       const res = await api.post("/cart/add", { product: productId });
       if (res.data?.status === 201 || res.data?.status === 200) {
-        // Reload cart after adding
         await loadCart();
         alert(`${product.title || product.name} đã được thêm vào giỏ hàng!`);
       }
@@ -54,7 +52,6 @@ export const CartProvider = ({ children }) => {
     try {
       const res = await api.delete(`/cart/remove/${productId}`);
       if (res.data?.status === 200) {
-        // Reload cart after removing
         await loadCart();
         alert("Xóa khỏi giỏ hàng thành công");
       }
@@ -67,11 +64,9 @@ export const CartProvider = ({ children }) => {
   };
 
   const clearCart = async () => {
-    // Backend doesn't have a clear cart endpoint, so clear locally
     setCartItems([]);
   };
 
-  // Calculate totals from current cart items
   const quantity = cartItems.length;
   const price = cartItems.reduce((acc, item) => acc + (item.price || 0), 0);
 

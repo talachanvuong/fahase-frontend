@@ -1,22 +1,63 @@
-import React from "react";
-import { AppBar, Toolbar, Typography, Box, InputBase, IconButton, Badge } from "@mui/material";
-import { ShoppingCart, Search } from "@mui/icons-material";
+import React, { useState } from "react";
+import {AppBar, Toolbar, Typography, Box, InputBase, IconButton, Badge, Avatar, Menu, MenuItem, ListItemIcon, ListItemText, Divider} from "@mui/material";
+import {ShoppingCart, Search, Person, Receipt, ShoppingBag, Logout} from "@mui/icons-material";
 import { useCart } from "../hook/useCart";
+import { useAuth } from "../hook/useAuth";
 import { useNavigate } from "react-router-dom";
 
 export default function Topbar() {
   const navigate = useNavigate();
   const { cartItems } = useCart();
+  const { user, logout } = useAuth();
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
 
   const uniqueCount = cartItems.length;
+
+  const handleMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleProfile = () => {
+    handleMenuClose();
+    navigate("/profile?tab=info");
+  };
+
+  const handleOrders = () => {
+    handleMenuClose();
+    navigate("/profile?tab=orders");
+  };
+
+  const handlePurchased = () => {
+    handleMenuClose();
+    navigate("/profile?tab=purchased");
+  };
+
+  const handleLogout = () => {
+    handleMenuClose();
+    logout();
+    navigate("/login");
+  };
 
   return (
     <AppBar position="static" sx={{ bgcolor: "white", color: "black", boxShadow: 1 }}>
       <Toolbar sx={{ justifyContent: "space-between" }}>
-        <Typography variant="h5" fontWeight="bold" color="primary">
+        {/* Logo */}
+        <Typography
+          variant="h5"
+          fontWeight="bold"
+          color="primary"
+          sx={{ cursor: "pointer" }}
+          onClick={() => navigate("/")}
+        >
           FAHASE
         </Typography>
 
+        {/* Search Bar */}
         <Box
           sx={{
             display: "flex",
@@ -31,12 +72,90 @@ export default function Topbar() {
           <InputBase fullWidth placeholder="Tìm kiếm sản phẩm..." />
         </Box>
 
-        <IconButton color="primary" onClick={() => navigate("/cart")}> 
-          <Badge badgeContent={uniqueCount} color="error">
-            <ShoppingCart />
-          </Badge>
-        </IconButton>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <IconButton color="primary" onClick={() => navigate("/cart")}>
+            <Badge badgeContent={uniqueCount} color="error">
+              <ShoppingCart />
+            </Badge>
+          </IconButton>
 
+          {user ? (
+            <>
+              <IconButton onClick={handleMenuOpen} sx={{ p: 0.5 }}>
+                <Avatar
+                  src={user.photo_url}
+                  alt={user.display_name}
+                  sx={{ width: 36, height: 36 }}
+                />
+              </IconButton>
+
+              <Menu
+                anchorEl={anchorEl}
+                open={open}
+                onClose={handleMenuClose}
+                transformOrigin={{ horizontal: "right", vertical: "top" }}
+                anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+                PaperProps={{
+                  sx: {
+                    mt: 1.5,
+                    minWidth: 220,
+                    boxShadow: 3,
+                    borderRadius: 2
+                  }
+                }}
+              >
+
+                <Box sx={{ px: 2, py: 1.5, bgcolor: "grey.50" }}>
+                  <Typography variant="subtitle1" fontWeight="bold" noWrap>
+                    {user.display_name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" noWrap>
+                    {user.email}
+                  </Typography>
+                </Box>
+
+                <Divider />
+
+                <MenuItem onClick={handleProfile}>
+                  <ListItemIcon>
+                    <Person fontSize="small" color="primary" />
+                  </ListItemIcon>
+                  <ListItemText>Thông tin cá nhân</ListItemText>
+                </MenuItem>
+
+                <MenuItem onClick={handleOrders}>
+                  <ListItemIcon>
+                    <Receipt fontSize="small" color="primary" />
+                  </ListItemIcon>
+                  <ListItemText>Đơn hàng của tôi</ListItemText>
+                </MenuItem>
+
+                <MenuItem onClick={handlePurchased}>
+                  <ListItemIcon>
+                    <ShoppingBag fontSize="small" color="primary" />
+                  </ListItemIcon>
+                  <ListItemText>Sản phẩm đã mua</ListItemText>
+                </MenuItem>
+
+                <Divider />
+
+                {/* Logout */}
+                <MenuItem onClick={handleLogout}>
+                  <ListItemIcon>
+                    <Logout fontSize="small" color="error" />
+                  </ListItemIcon>
+                  <ListItemText>
+                    <Typography color="error">Đăng xuất</Typography>
+                  </ListItemText>
+                </MenuItem>
+              </Menu>
+            </>
+          ) : (
+            <IconButton color="primary" onClick={() => navigate("/login")}>
+              <Person />
+            </IconButton>
+          )}
+        </Box>
       </Toolbar>
     </AppBar>
   );

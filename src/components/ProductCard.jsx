@@ -1,23 +1,12 @@
-import React from "react";
-import {
-  Card,
-  CardMedia,
-  CardContent,
-  Typography,
-  Button,
-  Box,
-  CardActionArea,
-  CardActions,
-  useTheme,
-  alpha,
-} from "@mui/material";
-import { Link as RouterLink } from "react-router-dom";
-import { AddShoppingCart } from "@mui/icons-material";
-import { useCart } from "../hook/useCart"; 
+import { Card, CardMedia, CardContent, Typography, Button, Box, CardActionArea, CardActions, useTheme, alpha, Stack} from "@mui/material";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { AddShoppingCart, ShoppingCartCheckout } from "@mui/icons-material";
+import { useCart } from "../hook/useCart";
 
 export default function ProductCard({ product }) {
   const theme = useTheme();
-  const { addToCart } = useCart(); 
+  const navigate = useNavigate();
+  const { addToCart } = useCart();
 
   const title = product?.title || product?.name || "Sản phẩm";
   const price = product?.price || 0;
@@ -28,7 +17,7 @@ export default function ProductCard({ product }) {
     : product?.image || "https://via.placeholder.com/300x300?text=No+Image";
   const detailHref = hasBackendId ? `/ebook/${product._id}` : "#";
 
-  //  Xử lý khi nhấn thêm giỏ hàng
+  // Xử lý thêm giỏ hàng
   const handleAddToCart = (e) => {
     e.stopPropagation();
     e.preventDefault();
@@ -42,11 +31,29 @@ export default function ProductCard({ product }) {
     });
   };
 
+  // Xử lý "Mua ngay" - Chuyển sang trang checkout
+  const handleBuyNow = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!hasBackendId) return;
+
+    navigate("/checkout", {
+      state: {
+        product: {
+          _id: product._id,
+          title: title,
+          price: price,
+          thumbnail: imageUrl,
+        },
+      },
+    });
+  };
+
   return (
     <Card
       sx={{
         width: 240,
-        height: 360,
+        height: 400,
         display: "flex",
         flexDirection: "column",
         border: `1px solid ${theme.palette.divider}`,
@@ -59,14 +66,12 @@ export default function ProductCard({ product }) {
         },
       }}
     >
-      {/* --- Vùng nhấn chuyển đến chi tiết --- */}
       <CardActionArea
         component={RouterLink}
         to={detailHref}
         disabled={!hasBackendId}
         sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}
       >
-        {/* Ảnh sản phẩm */}
         <Box
           sx={{
             width: "100%",
@@ -83,7 +88,8 @@ export default function ProductCard({ product }) {
             image={imageUrl}
             alt={title}
             onError={(e) => {
-              e.target.src = "https://via.placeholder.com/300x300?text=No+Image";
+              e.target.src =
+                "https://via.placeholder.com/300x300?text=No+Image";
             }}
             sx={{
               width: "100%",
@@ -93,7 +99,6 @@ export default function ProductCard({ product }) {
           />
         </Box>
 
-        {/* Thông tin sản phẩm */}
         <CardContent
           sx={{
             flexGrow: 1,
@@ -142,23 +147,42 @@ export default function ProductCard({ product }) {
         </CardContent>
       </CardActionArea>
 
-      {/* --- Nút thêm giỏ --- */}
       <CardActions sx={{ p: 1.5, pt: 0 }}>
-        <Button
-          variant="contained"
-          fullWidth
-          startIcon={<AddShoppingCart />}
-          disabled={!hasBackendId}
-          onClick={handleAddToCart}
-          sx={{
-            textTransform: "none",
-            fontWeight: "bold",
-            fontSize: "0.9rem",
-            borderRadius: 2,
-          }}
-        >
-          Thêm vào giỏ
-        </Button>
+        <Stack spacing={1} sx={{ width: "100%" }}>
+          {/* Nút Mua ngay */}
+          <Button
+            variant="contained"
+            fullWidth
+            startIcon={<ShoppingCartCheckout />}
+            disabled={!hasBackendId}
+            onClick={handleBuyNow}
+            sx={{
+              textTransform: "none",
+              fontWeight: "bold",
+              fontSize: "0.85rem",
+              borderRadius: 2,
+            }}
+          >
+            Mua ngay
+          </Button>
+
+          {/* Nút Thêm giỏ */}
+          <Button
+            variant="outlined"
+            fullWidth
+            startIcon={<AddShoppingCart />}
+            disabled={!hasBackendId}
+            onClick={handleAddToCart}
+            sx={{
+              textTransform: "none",
+              fontWeight: "bold",
+              fontSize: "0.85rem",
+              borderRadius: 2,
+            }}
+          >
+            Thêm vào giỏ
+          </Button>
+        </Stack>
       </CardActions>
     </Card>
   );

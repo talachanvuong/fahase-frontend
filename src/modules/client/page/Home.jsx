@@ -1,24 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
-import {
-  Box,
-  Grid,
-  Typography,
-  Pagination,
-  Stack,
-  Container, // (Mới) Giới hạn chiều rộng và căn giữa
-  Tabs,        // (Mới) Thay cho Chip
-  Tab,         // (Mới)
-  Skeleton,    // (Mới) Để tạo hiệu ứng loading
-  Card,
-  CardContent,
-  CardActions,
-  useTheme
-} from "@mui/material";
+import {Box, Grid, Typography, Pagination, Stack, Container, Tabs, Tab, Skeleton, Card, CardContent, CardActions, useTheme } from "@mui/material";
 import ProductCard from "../../../components/ProductCard";
 import api from "../../../services/api";
 
-// (MỚI) Component Skeleton cho ProductCard
-// Nó mô phỏng lại ProductCard đã refactor ở bước trước
 const ProductCardSkeleton = () => {
   const theme = useTheme();
   return (
@@ -42,18 +26,17 @@ export default function Home() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const pageSize = 12; // (Thay đổi) Thường là 12 (3x4) hoặc 16 (4x4)
+  const pageSize = 12; 
   const [total, setTotal] = useState(0);
   const categoriesLoaded = useRef(false);
 
-  // Load categories (Giữ nguyên)
+  // Load categories
   useEffect(() => {
     const loadCategories = async () => {
       try {
         const catRes = await api.get("/category/getAll");
         const cats = catRes.data?.result || [];
         setCategories(cats);
-        // Tự động chọn tab đầu tiên khi tải xong
         if (cats.length > 0) {
           setSelectedCategory(cats[0]._id);
         }
@@ -66,9 +49,8 @@ export default function Home() {
       loadCategories();
       categoriesLoaded.current = true;
     }
-  }, []); // Chỉ chạy 1 lần khi component mount
+  }, []); 
 
-  // Load products (Giữ nguyên logic)
   useEffect(() => {
     const loadProducts = async () => {
       if (!selectedCategory) {
@@ -82,14 +64,12 @@ export default function Home() {
         const prodRes = await api.get(`/product/getAllByCategory/${selectedCategory}`, {
           params: { page, limit: pageSize },
         });
-        // API returns { status, result: [...items] } or { status, result: { items, total } }
+
         const result = prodRes.data?.result || [];
         if (Array.isArray(result)) {
-          // If result is array directly
           setProducts(result);
           setTotal(result.length || 0);
         } else {
-          // If result is object with items and total
           setProducts(result.items || []);
           setTotal(result.total || 0);
         }
@@ -101,11 +81,10 @@ export default function Home() {
       }
     };
     loadProducts();
-  }, [selectedCategory, page, pageSize]); // Thêm pageSize vào dependency
+  }, [selectedCategory, page, pageSize]); 
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
-  // (MỚI) Hàm render trạng thái loading
   const renderLoading = () => (
     <Grid container spacing={2.5}>
       {Array.from({ length: pageSize }).map((_, i) => (
@@ -116,7 +95,6 @@ export default function Home() {
     </Grid>
   );
 
-  // (MỚI) Hàm render trạng thái rỗng
   const renderEmpty = () => (
     <Box sx={{
       display: 'flex',
@@ -133,7 +111,6 @@ export default function Home() {
     </Box>
   );
 
-  // (MỚI) Hàm render danh sách sản phẩm
   const renderProductList = () => (
     <>
       <Grid container spacing={2.5}>
@@ -159,16 +136,13 @@ export default function Home() {
   );
 
   return (
-    // (MỚI) Dùng Container để căn chỉnh
     <Container maxWidth="xl" sx={{ py: 3, display: "flex", gap: 3 }}>
-      
-      {/* (MỚI) Box nội dung chính linh hoạt */}
+
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography variant="h5" fontWeight="bold" mb={2}>
           Thể loại
         </Typography>
 
-        {/* (MỚI) Dùng Tabs thay cho Chip */}
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
           <Tabs
             value={selectedCategory || false} // Xử lý trường hợp selectedCategory=null
@@ -184,15 +158,11 @@ export default function Home() {
           </Tabs>
         </Box>
 
-        {/* (MỚI) Logic render theo trạng thái */}
-        { (loading && products.length === 0) ? renderLoading()  // Chỉ Skeletons khi tải lần đầu
-          : (!loading && products.length === 0) ? renderEmpty() // Trạng thái rỗng
-          : renderProductList() // Hiển thị danh sách
+        { (loading && products.length === 0) ? renderLoading()  
+          : (!loading && products.length === 0) ? renderEmpty() 
+          : renderProductList() 
         }
-        
-        {/* Hiển thị loading overlay mờ khi chuyển trang (tùy chọn) 
-          Phần này hơi nâng cao, nhưng làm UX tăng vọt
-        */}
+       
         {loading && products.length > 0 && (
           <Box sx={{
             position: 'absolute',
