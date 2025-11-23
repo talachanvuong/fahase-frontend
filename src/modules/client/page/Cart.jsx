@@ -162,14 +162,6 @@ export default function Cart() {
               Tiến hành thanh toán
             </Button>
             
-              {/* <Box sx={{ mt: 3 }}>
-                <PayPalCheckout
-                  onSuccess={() => {
-                    clearCart();
-                    navigate("/success");
-                  }}
-                />
-              </Box> */}
 
             {/* Nút Tiếp tục mua sắm */}
             <Button

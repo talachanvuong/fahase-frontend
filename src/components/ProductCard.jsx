@@ -1,21 +1,54 @@
-import { Card, CardMedia, CardContent, Typography, Button, Box, CardActionArea, CardActions, useTheme, alpha, Stack} from "@mui/material";
+import { useState, useEffect } from "react";
+import { 
+  Card, CardMedia, CardContent, Typography, Button, Box, 
+  CardActionArea, CardActions, useTheme, alpha, Stack, CircularProgress 
+} from "@mui/material";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
-import { AddShoppingCart, ShoppingCartCheckout } from "@mui/icons-material";
+import { AddShoppingCart, ShoppingCartCheckout, Download } from "@mui/icons-material";
 import { useCart } from "../hook/useCart";
+import { useAuth } from "../hook/useAuth";
+import api from "../services/api";
 
 export default function ProductCard({ product }) {
   const theme = useTheme();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { user } = useAuth();
+
+  const [hasPurchased, setHasPurchased] = useState(false);
+  const [checkingPurchase, setCheckingPurchase] = useState(true);
 
   const title = product?.title || product?.name || "Sản phẩm";
   const price = product?.price || 0;
-  const author = product?.author;
   const hasBackendId = Boolean(product?._id);
   const imageUrl = hasBackendId
     ? `/api/blob/thumbnailPublic/${product._id}`
     : product?.image || "https://via.placeholder.com/300x300?text=No+Image";
   const detailHref = hasBackendId ? `/ebook/${product._id}` : "#";
+
+  useEffect(() => {
+    const checkPurchase = async () => {
+      if (!user || !hasBackendId) {
+        setCheckingPurchase(false);
+        return;
+      }
+
+      setCheckingPurchase(true);
+      try {
+        const res = await api.get(`/bought/isBought/${product._id}`);
+        if (res.data.status === 200) {
+          setHasPurchased(res.data.result === true);
+        }
+      } catch (error) {
+        console.error("Check purchase error:", error);
+        setHasPurchased(false);
+      } finally {
+        setCheckingPurchase(false);
+      }
+    };
+
+    checkPurchase();
+  }, [user, product._id, hasBackendId]);
 
   // Xử lý thêm giỏ hàng
   const handleAddToCart = (e) => {
@@ -31,7 +64,7 @@ export default function ProductCard({ product }) {
     });
   };
 
-  // Xử lý "Mua ngay" - Chuyển sang trang checkout
+  // Xử lý "Mua ngay"
   const handleBuyNow = (e) => {
     e.stopPropagation();
     e.preventDefault();
@@ -47,6 +80,15 @@ export default function ProductCard({ product }) {
         },
       },
     });
+  };
+
+  // Xử lý đã mua
+  const handleDownload = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    // Chuyển đến trang chi tiết để xem và tải file
+    navigate(detailHref);
   };
 
   return (
@@ -88,8 +130,7 @@ export default function ProductCard({ product }) {
             image={imageUrl}
             alt={title}
             onError={(e) => {
-              e.target.src =
-                "https://via.placeholder.com/300x300?text=No+Image";
+              e.target.src = "https://via.placeholder.com/300x300?text=No+Image";
             }}
             sx={{
               width: "100%",
@@ -118,23 +159,6 @@ export default function ProductCard({ product }) {
             {title}
           </Typography>
 
-          {author && (
-            <Typography
-              color="text.secondary"
-              variant="body2"
-              sx={{
-                mb: 1,
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-              title={author}
-            >
-              {author}
-            </Typography>
-          )}
-
-          <Box sx={{ flexGrow: 1 }} />
 
           <Typography
             variant="h6"
@@ -147,15 +171,20 @@ export default function ProductCard({ product }) {
         </CardContent>
       </CardActionArea>
 
+      {/*Thay đổi dựa trên trạng thái mua */}
       <CardActions sx={{ p: 1.5, pt: 0 }}>
-        <Stack spacing={1} sx={{ width: "100%" }}>
-          {/* Nút Mua ngay */}
+        {checkingPurchase ? (
+          // Loading state
+          <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', py: 2 }}>
+            <CircularProgress size={24} />
+          </Box>
+        ) : hasPurchased ? (
+          // Đã mua
           <Button
             variant="contained"
             fullWidth
-            startIcon={<ShoppingCartCheckout />}
-            disabled={!hasBackendId}
-            onClick={handleBuyNow}
+            color="success"
+            onClick={handleDownload}
             sx={{
               textTransform: "none",
               fontWeight: "bold",
@@ -163,26 +192,44 @@ export default function ProductCard({ product }) {
               borderRadius: 2,
             }}
           >
-            Mua ngay
+            Đã mua
           </Button>
+        ) : (
+          // Chưa mua 
+          <Stack spacing={1} sx={{ width: "100%" }}>
+            <Button
+              variant="contained"
+              fullWidth
+              startIcon={<ShoppingCartCheckout />}
+              disabled={!hasBackendId}
+              onClick={handleBuyNow}
+              sx={{
+                textTransform: "none",
+                fontWeight: "bold",
+                fontSize: "0.85rem",
+                borderRadius: 2,
+              }}
+            >
+              Mua ngay
+            </Button>
 
-          {/* Nút Thêm giỏ */}
-          <Button
-            variant="outlined"
-            fullWidth
-            startIcon={<AddShoppingCart />}
-            disabled={!hasBackendId}
-            onClick={handleAddToCart}
-            sx={{
-              textTransform: "none",
-              fontWeight: "bold",
-              fontSize: "0.85rem",
-              borderRadius: 2,
-            }}
-          >
-            Thêm vào giỏ
-          </Button>
-        </Stack>
+            <Button
+              variant="outlined"
+              fullWidth
+              startIcon={<AddShoppingCart />}
+              disabled={!hasBackendId}
+              onClick={handleAddToCart}
+              sx={{
+                textTransform: "none",
+                fontWeight: "bold",
+                fontSize: "0.85rem",
+                borderRadius: 2,
+              }}
+            >
+              Thêm vào giỏ
+            </Button>
+          </Stack>
+        )}
       </CardActions>
     </Card>
   );

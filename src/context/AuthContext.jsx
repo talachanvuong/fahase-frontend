@@ -7,6 +7,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // 🔥 Load session user & admin khi refresh
   useEffect(() => {
     const loadMe = async () => {
       try {
@@ -16,6 +17,15 @@ export const AuthProvider = ({ children }) => {
         }
       } catch {
         console.log("User not logged in");
+      }
+
+      try {
+        const adminRes = await api.get("/admin/me", { withCredentials: true });
+        if (adminRes.data?.result) {
+          setUser({ ...adminRes.data.result, role: "admin" });
+        }
+      } catch (err) {
+        console.warn("Load admin session failed:", err);
       } finally {
         setLoading(false);
       }
@@ -31,23 +41,55 @@ export const AuthProvider = ({ children }) => {
     return () => window.removeEventListener("demo-login", handleDemo);
   }, []);
 
+  // ======= USER LOGIN 
   const login = () => {
     const disableLogin = typeof window !== 'undefined' && 
       window.localStorage?.getItem('DISABLE_LOGIN_FLOW') === '1';
     
     if (disableLogin) return;
 
-    const backend =
-      import.meta.env.VITE_BACKEND_URL
-      window.location.href = `${backend}/api/passport/login`;
+    const backend = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+    window.location.href = `${backend}/api/passport/login`;
   };
 
+  // ======= ADMIN LOGIN (Form)
+  const loginAdmin = async (display_name, password) => {
+    try {
+      const res = await api.post(
+        "/admin/login",
+        { display_name, password },
+        { withCredentials: true }
+      );
+
+      if (res.data.status === 200) {
+        const meRes = await api.get("/admin/me", { withCredentials: true });
+        setUser({ ...meRes.data.result, role: "admin" });
+        return { success: true };
+      }
+
+      return { success: false, message: res.data.result };
+    } catch (err) {
+      return {
+        success: false,
+        message: err.response?.data?.result || "Lỗi server",
+      };
+    }
+  };
+
+  // ====LOGOUT CHUNG
   const logout = async () => {
     try {
-      await api.post("/user/logout");
-    } catch {
-      // ignore
+      await api.post("/admin/logout", {}, { withCredentials: true });
+    } catch (err) {
+      console.warn("Admin logout failed:", err);
     }
+
+    try {
+      await api.post("/user/logout", {}, { withCredentials: true });
+    } catch (err) {
+      console.warn("User logout failed:", err);
+    }
+
     setUser(null);
     localStorage.removeItem("token");
     window.location.href = '/login';
@@ -57,7 +99,8 @@ export const AuthProvider = ({ children }) => {
     user,
     setUser,
     loading,
-    login,
+    login,      
+    loginAdmin,   
     logout,
   };
 
