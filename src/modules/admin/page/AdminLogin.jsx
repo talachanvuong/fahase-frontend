@@ -1,6 +1,5 @@
-// src/modules/admin/page/AdminLogin.jsx
 import React, { useState } from "react";
-import { Box, Paper, Typography, Stack, Divider, Button } from "@mui/material";
+import { Box, Paper, Typography, Stack, Button, Divider } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../hook/useAuth";
 
@@ -8,6 +7,7 @@ export default function AdminLogin() {
   const [form, setForm] = useState({ display_name: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
   const { loginAdmin } = useAuth();
 
@@ -24,13 +24,12 @@ export default function AdminLogin() {
       const res = await loginAdmin(form.display_name, form.password);
 
       if (res.success) {
-        // Login thành công → chuyển hướng dashboard
         navigate("/admin/dashboard", { replace: true });
       } else {
         setError(res.message || "Đăng nhập thất bại");
       }
     } catch (err) {
-      setError(err?.message || "Lỗi server");
+      setError(err.response?.data?.result || err.message || "Lỗi server");
     } finally {
       setLoading(false);
     }
@@ -53,12 +52,12 @@ export default function AdminLogin() {
           maxWidth: 400,
           width: "100%",
           borderRadius: 3,
-          boxShadow: "0px 10px 30px rgba(0, 0, 0, 0.1)",
+          boxShadow: "0px 10px 30px rgba(0,0,0,0.1)",
         }}
       >
         <Stack spacing={3} alignItems="center">
           <Typography variant="h5" fontWeight={700} color="primary.main">
-            Đăng nhập Quản trị
+            Đăng nhập Admin
           </Typography>
 
           <form onSubmit={handleSubmit} style={{ width: "100%" }}>
@@ -90,7 +89,11 @@ export default function AdminLogin() {
                   border: "1px solid #ccc",
                 }}
               />
-              {error && <Typography color="error">{error}</Typography>}
+              {error && (
+                <Typography color="error" sx={{ fontSize: 14 }}>
+                  {error}
+                </Typography>
+              )}
               <Button type="submit" variant="contained" fullWidth disabled={loading}>
                 {loading ? "Đang đăng nhập..." : "Đăng nhập"}
               </Button>

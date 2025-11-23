@@ -7,56 +7,32 @@ import Dashboard from "../page/DashBoard";
 import OrderList from "../page/orders/OrderList";
 import OrderDetail from "../page/orders/OrderDetail";
 
-import ProductList from "../page/products/ProductList";
-import ProductAdd from "../page/products/ProductAdd";
-import ProductDetail from "../page/products/ProductDetail";
-import ProductEdit from "../page/products/ProductEdit";
-
-import CategoryList from "../page/CategoryList";
-
-import ProtectedRoute from "../../../components/ProtectedRoute";
+import CategoryList from "../page/Category/CategoryList";
+import CategoryProducts from "../page/Category/CategoryProducts";
+import ProductAdd from "../page/Category/ProductAdd";
+import ProductDetail from "../page/Category/ProductDetail";
+import ProductEdit from "../page/Category/ProductEdit";
 
 export default function AdminRoutes() {
   return (
     <Routes>
-      {/* Login admin — không cần bảo vệ */}
+      {/* Login admin */}
       <Route path="login" element={<AdminLogin />} />
 
-      {/* === Nếu muốn yêu cầu login admin === */}
-      {/* Cách an toàn: comment từng Route */}
-      {/*
-      <Route path="/*" element={
-        <ProtectedRoute requiredRole="admin" loginPath="/admin/login">
-          <AdminLayout />
-        </ProtectedRoute>
-      }>
-        <Route path="dashboard" element={<Dashboard />} />
-
-        <Route path="orders" element={<OrderList />} />
-        <Route path="orders/:id" element={<OrderDetail />} />
-
-        <Route path="products" element={<ProductList />} />
-        <Route path="products/add" element={<ProductAdd />} />
-        <Route path="products/:id" element={<ProductDetail />} />
-        <Route path="products/:id/edit" element={<ProductEdit />} />
-
-        <Route path="categories" element={<CategoryList />} />
-      </Route>
-      */}
-
-      {/* === Nếu muốn bỏ ràng buộc login admin === */}
+      {/* Layout admin */}
       <Route path="/*" element={<AdminLayout />}>
         <Route path="dashboard" element={<Dashboard />} />
 
+        {/* Orders */}
         <Route path="orders" element={<OrderList />} />
         <Route path="orders/:id" element={<OrderDetail />} />
 
-        <Route path="products" element={<ProductList />} />
-        <Route path="products/add" element={<ProductAdd />} />
-        <Route path="products/:id" element={<ProductDetail />} />
-        <Route path="products/:id/edit" element={<ProductEdit />} />
-
+        {/* Categories */}
         <Route path="categories" element={<CategoryList />} />
+        <Route path="categories/:categoryId/products" element={<CategoryProducts />} />
+        <Route path="categories/:categoryId/products/add" element={<ProductAdd />} />
+        <Route path="categories/:categoryId/products/:productId" element={<ProductDetail />} />
+        <Route path="categories/:categoryId/products/:productId/edit" element={<ProductEdit />} />
       </Route>
     </Routes>
   );
