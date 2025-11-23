@@ -1,34 +1,34 @@
-import React from "react";
-import { Outlet, Link, useLocation } from "react-router-dom";
+import React, { useContext } from "react";
+import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { AppBar, Toolbar, Button, Box, Typography } from "@mui/material";
+import { AuthContext } from "../../../context/AuthContext";
 
 const menuItems = [
-  { label: "Đơn hàng", path: "orders" },
-  { label: "Sản phẩm", path: "products" },
-  { label: "Loại sản phẩm", path: "categories" },
+  { label: "Quản Lý Đơn hàng", path: "orders" },
+  { label: "Quản Lý sản phẩm", path: "categories" },
 ];
 
 export default function AdminLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { admin, logoutAdmin } = useContext(AuthContext);
+
+  const handleLogout = async () => {
+    await logoutAdmin();
+    navigate("/admin/login", { replace: true });
+  };
 
   return (
     <Box>
-      {/* AppBar Menu Ngang */}
       <AppBar position="static">
         <Toolbar>
-          {/* Click quay về dashboard */}
           <Typography
             variant="h6"
             component={Link}
             to="/admin/dashboard"
-            sx={{
-              flexGrow: 1,
-              color: "inherit",
-              textDecoration: "none",
-              cursor: "pointer",
-            }}
+            sx={{ flexGrow: 1, color: "inherit", textDecoration: "none", cursor: "pointer" }}
           >
-            Administrator
+            FAHASE ADMIN
           </Typography>
 
           {menuItems.map((item) => (
@@ -36,20 +36,21 @@ export default function AdminLayout() {
               key={item.path}
               color="inherit"
               component={Link}
-              to={`/admin/${item.path}`} // đường dẫn tuyệt đối
-              sx={{
-                textDecoration: location.pathname.includes(item.path)
-                  ? "underline"
-                  : "none",
-              }}
+              to={`/admin/${item.path}`}
+              sx={{ textDecoration: location.pathname.includes(item.path) ? "underline" : "none" }}
             >
               {item.label}
             </Button>
           ))}
+
+          {admin && (
+            <Button onClick={handleLogout} sx={{ ml: 2, color: "red" }}>
+              Đăng xuất
+            </Button>
+          )}
         </Toolbar>
       </AppBar>
 
-      {/* Nội dung chính */}
       <Box sx={{ padding: 3 }}>
         <Outlet />
       </Box>
