@@ -1,51 +1,66 @@
-import React, { useState } from "react";
-import {AppBar, Toolbar, Typography, Box, InputBase, IconButton, Badge, Avatar, Menu, MenuItem, ListItemIcon, ListItemText, Divider} from "@mui/material";
-import {ShoppingCart, Search, Person, Receipt, ShoppingBag, Logout} from "@mui/icons-material";
+import React, { useState, } from "react";
+import {
+  AppBar, Toolbar, Typography, Box, InputBase, IconButton,
+  Badge, Avatar, Menu, MenuItem, ListItemIcon, ListItemText, Divider,
+  Paper, List, ListItem, ListItemButton
+} from "@mui/material";
+import {
+  ShoppingCart, Search, Person, Receipt, Logout
+} from "@mui/icons-material";
+
 import { useCart } from "../hook/useCart";
 import { useAuth } from "../hook/useAuth";
 import { useNavigate } from "react-router-dom";
+import api from "../services/api";
 
 export default function Topbar() {
   const navigate = useNavigate();
   const { cartItems } = useCart();
   const { user, logout } = useAuth();
+
   const [anchorEl, setAnchorEl] = useState(null);
-  const open = Boolean(anchorEl);
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggest, setShowSuggest] = useState(false);
 
   const uniqueCount = cartItems.length;
+  const open = Boolean(anchorEl);
 
-  const handleMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
+const handleSearchEnter = async (e) => {
+  if (e.key !== "Enter") return;
 
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
+  if (!searchKeyword.trim()) {
+    setSuggestions([]);
+    setShowSuggest(false);
+    return;
+  }
 
-  const handleProfile = () => {
-    handleMenuClose();
-    navigate("/profile?tab=info");
-  };
+  try {
+    const res = await api.get(`/product/find?keyword=${encodeURIComponent(searchKeyword.trim())}`);
 
-  const handleOrders = () => {
-    handleMenuClose();
-    navigate("/profile?tab=orders");
-  };
+    if (res.data.status === 200) {
+      setSuggestions(res.data.result);
+      setShowSuggest(true);
+    }
+  } catch (err) {
+    console.error("Search error:", err);
+    setSuggestions([]);
+    setShowSuggest(true);
+  }
+};
 
-  const handlePurchased = () => {
-    handleMenuClose();
-    navigate("/profile?tab=purchased");
-  };
 
-  const handleLogout = () => {
-    handleMenuClose();
-    logout();
-    navigate("/login");
+  // === CLICK ITEM SEARCH ===
+  const handleSelectProduct = (id) => {
+    setShowSuggest(false);
+    setSearchKeyword("");
+    navigate(`/ebook/${id}`);
   };
 
   return (
-    <AppBar position="static" sx={{ bgcolor: "white", color: "black", boxShadow: 1 }}>
-      <Toolbar sx={{ justifyContent: "space-between" }}>
+    <AppBar position="sticky" sx={{ bgcolor: "white", color: "black", boxShadow: 1 }}>
+      <Toolbar sx={{ justifyContent: "space-between", position: "relative" }}>
+        
         {/* Logo */}
         <Typography
           variant="h5"
@@ -58,20 +73,68 @@ export default function Topbar() {
         </Typography>
 
         {/* Search Bar */}
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            bgcolor: "#f1f1f1",
-            borderRadius: 2,
-            px: 2,
-            width: "50%",
-          }}
-        >
-          <Search sx={{ mr: 1, color: "gray" }} />
-          <InputBase fullWidth placeholder="Tìm kiếm sản phẩm..." />
+        <Box sx={{ position: "relative", width: "50%" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              bgcolor: "#f1f1f1",
+              borderRadius: 2,
+              px: 2,
+            }}
+          >
+            <Search sx={{ mr: 1, color: "gray" }} />
+            <InputBase
+              fullWidth
+              placeholder="Tìm kiếm sản phẩm..."
+              value={searchKeyword}
+              onChange={(e) => {
+              setSearchKeyword(e.target.value);
+              setShowSuggest(false); 
+                }}
+                onKeyDown={handleSearchEnter}
+
+            />
+          </Box>
+
+          {/* 🔥 SEARCH DROPDOWN */}
+            {showSuggest && (
+              <Paper
+                elevation={4}
+                sx={{
+                  position: "absolute",
+                  top: 45,
+                  width: "100%",
+                  zIndex: 99,
+                  maxHeight: 300,
+                  overflowY: "auto",
+                  borderRadius: 2,
+                }}
+              >
+                {suggestions.length > 0 ? (
+                  <List>
+                    {suggestions.map((item) => (
+                      <ListItem disablePadding key={item._id}>
+                        <ListItemButton onClick={() => handleSelectProduct(item._id)}>
+                          <ListItemText
+                            primary={item.title}
+                            secondary={`${item.price.toLocaleString()} ₫`}
+                          />
+                        </ListItemButton>
+                      </ListItem>
+                    ))}
+                  </List>
+                ) : (
+                  <Box sx={{ p: 2, textAlign: "center", color: "gray" }}>
+                    Không có kết quả
+                  </Box>
+                )}
+              </Paper>
+            )}
+
         </Box>
 
+        {/* RIGHT ZONE */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <IconButton color="primary" onClick={() => navigate("/cart")}>
             <Badge badgeContent={uniqueCount} color="error">
@@ -81,72 +144,39 @@ export default function Topbar() {
 
           {user ? (
             <>
-              <IconButton onClick={handleMenuOpen} sx={{ p: 0.5 }}>
-                <Avatar
-                  src={user.photo_url}
-                  alt={user.display_name}
-                  sx={{ width: 36, height: 36 }}
-                />
+              <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
+                <Avatar src={user.photo_url} alt={user.display_name} />
               </IconButton>
 
               <Menu
                 anchorEl={anchorEl}
                 open={open}
-                onClose={handleMenuClose}
-                transformOrigin={{ horizontal: "right", vertical: "top" }}
-                anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-                PaperProps={{
-                  sx: {
-                    mt: 1.5,
-                    minWidth: 220,
-                    boxShadow: 3,
-                    borderRadius: 2
-                  }
-                }}
+                onClose={() => setAnchorEl(null)}
+                PaperProps={{ sx: { minWidth: 220, borderRadius: 2 } }}
               >
-
-                <Box sx={{ px: 2, py: 1.5, bgcolor: "grey.50" }}>
-                  <Typography variant="subtitle1" fontWeight="bold" noWrap>
-                    {user.display_name}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" noWrap>
+                <Box sx={{ px: 2, py: 1.5 }}>
+                  <Typography fontWeight="bold">{user.display_name}</Typography>
+                  <Typography variant="body2" color="text.secondary">
                     {user.email}
                   </Typography>
                 </Box>
-
                 <Divider />
 
-                <MenuItem onClick={handleProfile}>
-                  <ListItemIcon>
-                    <Person fontSize="small" color="primary" />
-                  </ListItemIcon>
+                <MenuItem onClick={() => navigate("/profile?tab=info")}>
+                  <ListItemIcon><Person /></ListItemIcon>
                   <ListItemText>Thông tin cá nhân</ListItemText>
                 </MenuItem>
 
-                <MenuItem onClick={handleOrders}>
-                  <ListItemIcon>
-                    <Receipt fontSize="small" color="primary" />
-                  </ListItemIcon>
-                  <ListItemText>Đơn hàng của tôi</ListItemText>
-                </MenuItem>
-
-                <MenuItem onClick={handlePurchased}>
-                  <ListItemIcon>
-                    <ShoppingBag fontSize="small" color="primary" />
-                  </ListItemIcon>
-                  <ListItemText>Sản phẩm đã mua</ListItemText>
+                <MenuItem onClick={() => navigate("/profile?tab=orders")}>
+                  <ListItemIcon><Receipt /></ListItemIcon>
+                  <ListItemText>Đơn hàng</ListItemText>
                 </MenuItem>
 
                 <Divider />
 
-                {/* Logout */}
-                <MenuItem onClick={handleLogout}>
-                  <ListItemIcon>
-                    <Logout fontSize="small" color="error" />
-                  </ListItemIcon>
-                  <ListItemText>
-                    <Typography color="error">Đăng xuất</Typography>
-                  </ListItemText>
+                <MenuItem onClick={() => { logout(); navigate("/login"); }}>
+                  <ListItemIcon><Logout color="error" /></ListItemIcon>
+                  <ListItemText><Typography color="error">Đăng xuất</Typography></ListItemText>
                 </MenuItem>
               </Menu>
             </>
