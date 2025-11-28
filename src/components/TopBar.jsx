@@ -16,7 +16,7 @@ import api from "../services/api";
 export default function Topbar() {
   const navigate = useNavigate();
   const { cartItems } = useCart();
-  const { user, logout } = useAuth();
+  const { user, logoutUser } = useAuth();
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [searchKeyword, setSearchKeyword] = useState("");
@@ -26,35 +26,40 @@ export default function Topbar() {
   const uniqueCount = cartItems.length;
   const open = Boolean(anchorEl);
 
-const handleSearchEnter = async (e) => {
-  if (e.key !== "Enter") return;
+  const handleSearchEnter = async (e) => {
+    if (e.key !== "Enter") return;
 
-  if (!searchKeyword.trim()) {
-    setSuggestions([]);
-    setShowSuggest(false);
-    return;
-  }
+    if (!searchKeyword.trim()) {
+      setSuggestions([]);
+      setShowSuggest(false);
+      return;
+    }
 
-  try {
-    const res = await api.get(`/product/find?keyword=${encodeURIComponent(searchKeyword.trim())}`);
+    try {
+      const res = await api.get(`/product/find?keyword=${encodeURIComponent(searchKeyword.trim())}`);
 
-    if (res.data.status === 200) {
-      setSuggestions(res.data.result);
+      if (res.data.status === 200) {
+        setSuggestions(res.data.result);
+        setShowSuggest(true);
+      }
+    } catch (err) {
+      console.error("Search error:", err);
+      setSuggestions([]);
       setShowSuggest(true);
     }
-  } catch (err) {
-    console.error("Search error:", err);
-    setSuggestions([]);
-    setShowSuggest(true);
-  }
-};
-
+  };
 
   // === CLICK ITEM SEARCH ===
   const handleSelectProduct = (id) => {
     setShowSuggest(false);
     setSearchKeyword("");
     navigate(`/ebook/${id}`);
+  };
+
+  // === LOGOUT HANDLER ===
+  const handleLogout = () => {
+    setAnchorEl(null);
+    logoutUser();
   };
 
   return (
@@ -89,49 +94,47 @@ const handleSearchEnter = async (e) => {
               placeholder="Tìm kiếm sản phẩm..."
               value={searchKeyword}
               onChange={(e) => {
-              setSearchKeyword(e.target.value);
-              setShowSuggest(false); 
-                }}
-                onKeyDown={handleSearchEnter}
-
+                setSearchKeyword(e.target.value);
+                setShowSuggest(false); 
+              }}
+              onKeyDown={handleSearchEnter}
             />
           </Box>
 
           {/* 🔥 SEARCH DROPDOWN */}
-            {showSuggest && (
-              <Paper
-                elevation={4}
-                sx={{
-                  position: "absolute",
-                  top: 45,
-                  width: "100%",
-                  zIndex: 99,
-                  maxHeight: 300,
-                  overflowY: "auto",
-                  borderRadius: 2,
-                }}
-              >
-                {suggestions.length > 0 ? (
-                  <List>
-                    {suggestions.map((item) => (
-                      <ListItem disablePadding key={item._id}>
-                        <ListItemButton onClick={() => handleSelectProduct(item._id)}>
-                          <ListItemText
-                            primary={item.title}
-                            secondary={`${item.price.toLocaleString()} ₫`}
-                          />
-                        </ListItemButton>
-                      </ListItem>
-                    ))}
-                  </List>
-                ) : (
-                  <Box sx={{ p: 2, textAlign: "center", color: "gray" }}>
-                    Không có kết quả
-                  </Box>
-                )}
-              </Paper>
-            )}
-
+          {showSuggest && (
+            <Paper
+              elevation={4}
+              sx={{
+                position: "absolute",
+                top: 45,
+                width: "100%",
+                zIndex: 99,
+                maxHeight: 300,
+                overflowY: "auto",
+                borderRadius: 2,
+              }}
+            >
+              {suggestions.length > 0 ? (
+                <List>
+                  {suggestions.map((item) => (
+                    <ListItem disablePadding key={item._id}>
+                      <ListItemButton onClick={() => handleSelectProduct(item._id)}>
+                        <ListItemText
+                          primary={item.title}
+                          secondary={`${item.price.toLocaleString()} ₫`}
+                        />
+                      </ListItemButton>
+                    </ListItem>
+                  ))}
+                </List>
+              ) : (
+                <Box sx={{ p: 2, textAlign: "center", color: "gray" }}>
+                  Không có kết quả
+                </Box>
+              )}
+            </Paper>
+          )}
         </Box>
 
         {/* RIGHT ZONE */}
@@ -162,19 +165,19 @@ const handleSearchEnter = async (e) => {
                 </Box>
                 <Divider />
 
-                <MenuItem onClick={() => navigate("/profile?tab=info")}>
+                <MenuItem onClick={() => { setAnchorEl(null); navigate("/profile?tab=info"); }}>
                   <ListItemIcon><Person /></ListItemIcon>
                   <ListItemText>Thông tin cá nhân</ListItemText>
                 </MenuItem>
 
-                <MenuItem onClick={() => navigate("/profile?tab=orders")}>
+                <MenuItem onClick={() => { setAnchorEl(null); navigate("/profile?tab=orders"); }}>
                   <ListItemIcon><Receipt /></ListItemIcon>
                   <ListItemText>Đơn hàng</ListItemText>
                 </MenuItem>
 
                 <Divider />
 
-                <MenuItem onClick={() => { logout(); navigate("/login"); }}>
+                <MenuItem onClick={handleLogout}>
                   <ListItemIcon><Logout color="error" /></ListItemIcon>
                   <ListItemText><Typography color="error">Đăng xuất</Typography></ListItemText>
                 </MenuItem>
