@@ -1,79 +1,52 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import {
-  Box,
-  Typography,
-  Grid,
-  Button,
-  Container,
-  Divider,
-  Skeleton,
-  useTheme,
-  Stack,
-  Alert,
-  TextField,
-  Card,
-  CardContent,
-  Avatar,
-  Paper,
-  Chip,
-  CircularProgress,
-} from "@mui/material";
+import { Box, Typography, Grid, Button, Container, Divider, Skeleton, Stack, Alert, TextField, Card, CardContent, Avatar, Paper, Chip, CircularProgress } from "@mui/material";
 import { useCart } from "../../../hook/useCart";
 import { useAuth } from "../../../hook/useAuth";
 import api from "../../../services/api";
-import {
-  AddShoppingCart,
-  ShoppingCartCheckout,
-  Send,
-  Download,
-  CheckCircle,
-} from "@mui/icons-material";
+import { AddShoppingCart, ShoppingCartCheckout, Send, Download, CheckCircle } from "@mui/icons-material";
 
 const DetailSkeleton = () => (
-  <Grid container spacing={4}>
-    <Grid item md={5} xs={12}>
-      <Skeleton variant="rectangular" sx={{ width: "100%", aspectRatio: "1/1", borderRadius: 3 }} />
-    </Grid>
-    <Grid item md={7} xs={12}>
-      <Skeleton height={40} width="70%" sx={{ mb: 2 }} />
-      <Skeleton height={20} width="40%" sx={{ mb: 1 }} />
-      <Divider sx={{ my: 2 }} />
-      <Skeleton height={50} width="30%" sx={{ mb: 3 }} />
-      <Skeleton variant="rectangular" height={56} width="100%" sx={{ mb: 2 }} />
-      <Skeleton height={150} sx={{ mt: 3 }} />
-    </Grid>
-  </Grid>
+  <Box>
+    <Box sx={{ display: "flex", gap: 3, mb: 3 }}>
+      <Skeleton variant="rectangular" sx={{ width: 200, height: 280, borderRadius: 2, flexShrink: 0 }} />
+      <Box sx={{ flex: 1 }}>
+        <Skeleton height={35} width="60%" sx={{ mb: 1 }} />
+        <Skeleton height={40} width="25%" sx={{ mb: 2 }} />
+        <Skeleton variant="rectangular" height={48} sx={{ mb: 1 }} />
+        <Skeleton variant="rectangular" height={48} />
+      </Box>
+    </Box>
+    <Skeleton height={100} />
+  </Box>
 );
 
 const CommentItem = ({ comment }) => (
-  <Card variant="outlined" sx={{ mb: 2, borderRadius: 2 }}>
-    <CardContent>
-      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
+  <Card variant="outlined" sx={{ mb: 1.5, borderRadius: 2 }}>
+    <CardContent sx={{ py: 1.5, px: 2, "&:last-child": { pb: 1.5 } }}>
+      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
         <Avatar
           src={comment.user?.photo_url}
           alt={comment.user?.display_name}
-          sx={{ width: 40, height: 40 }}
+          sx={{ width: 36, height: 36 }}
         />
         <Box sx={{ flex: 1 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-            <Typography variant="body1" fontWeight="bold">
+            <Typography variant="body2" fontWeight="600">
               {comment.user?.display_name || "Người dùng"}
             </Typography>
             <Chip
-              icon={<CheckCircle />}
+              icon={<CheckCircle sx={{ fontSize: 14 }} />}
               label="Đã mua"
               size="small"
               color="success"
-              sx={{ height: 20, fontSize: "0.7rem" }}
+              sx={{ height: 18, fontSize: "0.65rem", "& .MuiChip-icon": { fontSize: 14 } }}
             />
           </Box>
-
-          <Typography variant="body2" color="text.primary" sx={{ mb: 1, lineHeight: 1.6 }}>
+          <Typography variant="body2" color="text.primary" sx={{ mb: 0.5, lineHeight: 1.5 }}>
             {comment.content}
           </Typography>
-
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>
             {comment.created_at}
           </Typography>
         </Box>
@@ -87,7 +60,6 @@ export default function EbookDetail() {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { user } = useAuth();
-  const theme = useTheme();
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -95,13 +67,10 @@ export default function EbookDetail() {
   const [commentsLoading, setCommentsLoading] = useState(true);
   const [hasPurchased, setHasPurchased] = useState(false);
   const [checkingPurchase, setCheckingPurchase] = useState(true);
-
-  // State cho comment form
   const [commentText, setCommentText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState({ type: "", text: "" });
 
-  // Load product data
   useEffect(() => {
     const load = async () => {
       setLoading(true);
@@ -118,7 +87,6 @@ export default function EbookDetail() {
     load();
   }, [id]);
 
-  // Load comments
   useEffect(() => {
     const loadComments = async () => {
       setCommentsLoading(true);
@@ -136,7 +104,6 @@ export default function EbookDetail() {
     loadComments();
   }, [id]);
 
-  // Check if user has purchased
   useEffect(() => {
     const checkPurchase = async () => {
       if (!user) {
@@ -144,7 +111,6 @@ export default function EbookDetail() {
         setHasPurchased(false);
         return;
       }
-
       setCheckingPurchase(true);
       try {
         const res = await api.get(`/bought/isBought/${id}`);
@@ -161,27 +127,21 @@ export default function EbookDetail() {
     checkPurchase();
   }, [id, user]);
 
-  // Submit comment
   const handleSubmitComment = async () => {
     if (!commentText.trim()) {
       setSubmitMessage({ type: "error", text: "Vui lòng nhập nội dung đánh giá" });
       return;
     }
-
     setSubmitting(true);
     setSubmitMessage({ type: "", text: "" });
-
     try {
       const res = await api.post("/comment/add", {
         product: id,
         content: commentText,
       });
-
       if (res.data.status === 200) {
         setSubmitMessage({ type: "success", text: "Đánh giá của bạn đã được gửi!" });
         setCommentText("");
-
-        // Reload comments
         const commentsRes = await api.get(`/comment/getAllByProduct/${id}`);
         if (commentsRes.data.status === 200) {
           setComments(commentsRes.data.result || []);
@@ -224,7 +184,7 @@ export default function EbookDetail() {
 
   if (loading) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Container maxWidth="md" sx={{ py: 3 }}>
         <DetailSkeleton />
       </Container>
     );
@@ -232,7 +192,7 @@ export default function EbookDetail() {
 
   if (!product) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Container maxWidth="md" sx={{ py: 3 }}>
         <Alert severity="error">Không tìm thấy sản phẩm này hoặc sản phẩm đã bị xóa.</Alert>
       </Container>
     );
@@ -244,127 +204,111 @@ export default function EbookDetail() {
   const description = product.description || "Chưa có mô tả cho sản phẩm này.";
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Grid container spacing={4}>
-        {/* === CỘT 1: HÌNH ẢNH (40%) === */}
-        <Grid item md={5} xs={12}>
-          <Box
-            sx={{
-              position: "sticky",
-              top: 100,
-              aspectRatio: "1/1",
-              overflow: "hidden",
-              borderRadius: 2,
-              boxShadow: 2,
-              bgcolor: "grey.100",
-            }}
-          >
-            <img
-              src={image}
-              alt={displayName}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
-          </Box>
-        </Grid>
+    <Container maxWidth="md" sx={{ py: 3 }}>
+      {/* Thông tin sản phẩm - Layout ngang */}
+      <Box sx={{ display: "flex", gap: 3, mb: 3 }}>
+        {/* Ảnh sản phẩm - Cố định kích thước nhỏ */}
+        <Box
+          sx={{
+            width: 200,
+            height: 280,
+            flexShrink: 0,
+            overflow: "hidden",
+            borderRadius: 2,
+            boxShadow: 2,
+            bgcolor: "grey.100",
+          }}
+        >
+          <img
+            src={image}
+            alt={displayName}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        </Box>
 
-        {/* === CỘT 2: THÔNG TIN (60%) === */}
-        <Grid item md={7} xs={12}>
-          {/* Tên sản phẩm */}
-          <Typography variant="h4" fontWeight="bold" mb={1}>
+        {/* Thông tin và nút hành động */}
+        <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+          <Typography variant="h5" fontWeight="bold" mb={1}>
             {displayName}
           </Typography>
 
-          <Divider sx={{ my: 2 }} />
-
-          {/* Giá */}
-          <Typography variant="h5" fontWeight="bold" color="primary.main" mb={3}>
+          <Typography variant="h6" fontWeight="bold" color="primary.main" mb={2}>
             {price.toLocaleString()} ₫
           </Typography>
 
-          {/* === NÚT HÀNH ĐỘNG === */}
           {checkingPurchase ? (
             <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
-              <CircularProgress size={30} />
+              <CircularProgress size={24} />
             </Box>
           ) : hasPurchased ? (
-            // ✅ Đã mua - Hiển thị trạng thái và nút tải
             <Box>
-              <Alert severity="success" icon={<CheckCircle />} sx={{ mb: 2 }}>
+              <Alert severity="success" icon={<CheckCircle />} sx={{ mb: 1.5, py: 0.5 }}>
                 Bạn đã sở hữu sản phẩm này
               </Alert>
               <Button
                 variant="contained"
                 color="success"
-                size="large"
+                size="medium"
                 startIcon={<Download />}
                 fullWidth
-                sx={{ py: 1.5, fontWeight: "bold", mb: 2 }}
+                sx={{ fontWeight: "bold" }}
               >
                 Tải xuống ngay
               </Button>
             </Box>
           ) : (
-            // ❌ Chưa mua - Hiển thị nút mua
-            <Stack spacing={2} sx={{ mb: 3 }}>
+            <Stack spacing={1.5}>
               <Button
                 variant="contained"
                 color="primary"
-                size="large"
+                size="medium"
                 startIcon={<ShoppingCartCheckout />}
                 onClick={handleBuyNow}
                 fullWidth
-                sx={{ py: 1.5, fontWeight: "bold" }}
+                sx={{ fontWeight: "bold" }}
               >
                 Mua ngay
               </Button>
               <Button
                 variant="outlined"
                 color="primary"
-                size="large"
+                size="medium"
                 startIcon={<AddShoppingCart />}
                 onClick={handleAddToCart}
                 fullWidth
-                sx={{ py: 1.5, fontWeight: "bold" }}
+                sx={{ fontWeight: "bold" }}
               >
                 Thêm vào giỏ
               </Button>
             </Stack>
           )}
+        </Box>
+      </Box>
 
-          <Divider sx={{ my: 3 }} />
+      <Divider sx={{ my: 2 }} />
 
-          {/* Mô tả sản phẩm */}
-          <Typography variant="h6" fontWeight="bold" mb={2}>
-            Mô tả sản phẩm
-          </Typography>
-          <Typography
-            variant="body1"
-            sx={{
-              color: "text.secondary",
-              lineHeight: 1.8,
-              maxHeight: 200,
-              overflowY: "auto",
-            }}
-          >
-            {description}
-          </Typography>
-        </Grid>
-      </Grid>
+      {/* Mô tả sản phẩm */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h6" fontWeight="bold" mb={1.5}>
+          Mô tả sản phẩm
+        </Typography>
+        <Typography variant="body2" sx={{ color: "text.secondary", lineHeight: 1.7 }}>
+          {description}
+        </Typography>
+      </Box>
 
-      {/* === PHẦN ĐÁNH GIÁ === */}
-      <Box sx={{ mt: 6 }}>
-        <Typography variant="h5" fontWeight="bold" mb={3}>
-          Đánh giá sản phẩm
+      <Divider sx={{ my: 2 }} />
+
+      {/* Phần đánh giá */}
+      <Box>
+        <Typography variant="h6" fontWeight="bold" mb={2}>
+          Đánh giá sản phẩm ({comments.length})
         </Typography>
 
         {/* Form đánh giá */}
         {user ? (
           hasPurchased ? (
-            <Paper elevation={1} sx={{ p: 3, mb: 3, borderRadius: 2, bgcolor: "grey.50" }}>
-              <Typography variant="subtitle1" fontWeight="bold" mb={2}>
-                Chia sẻ trải nghiệm của bạn
-              </Typography>
-
+            <Paper elevation={1} sx={{ p: 2, mb: 2, borderRadius: 2, bgcolor: "grey.50" }}>
               <TextField
                 fullWidth
                 multiline
@@ -373,17 +317,19 @@ export default function EbookDetail() {
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 disabled={submitting}
-                sx={{ mb: 2, bgcolor: "white" }}
+                size="small"
+                sx={{ mb: 1.5, bgcolor: "white" }}
               />
 
               {submitMessage.text && (
-                <Alert severity={submitMessage.type} sx={{ mb: 2 }}>
+                <Alert severity={submitMessage.type} sx={{ mb: 1.5, py: 0.5 }}>
                   {submitMessage.text}
                 </Alert>
               )}
 
               <Button
                 variant="contained"
+                size="small"
                 startIcon={<Send />}
                 onClick={handleSubmitComment}
                 disabled={submitting}
@@ -393,16 +339,16 @@ export default function EbookDetail() {
               </Button>
             </Paper>
           ) : checkingPurchase ? (
-            <Alert severity="info" sx={{ mb: 3 }}>
+            <Alert severity="info" sx={{ mb: 2, py: 0.5 }}>
               Đang kiểm tra...
             </Alert>
           ) : (
-            <Alert severity="warning" sx={{ mb: 3 }}>
+            <Alert severity="warning" sx={{ mb: 2, py: 0.5 }}>
               Bạn cần mua sản phẩm này để có thể đánh giá.
             </Alert>
           )
         ) : (
-          <Alert severity="info" sx={{ mb: 3 }}>
+          <Alert severity="info" sx={{ mb: 2, py: 0.5 }}>
             Vui lòng{" "}
             <Button size="small" onClick={() => navigate("/login")}>
               đăng nhập
@@ -412,34 +358,28 @@ export default function EbookDetail() {
         )}
 
         {/* Danh sách đánh giá */}
-        <Box>
-          <Typography variant="h6" fontWeight="bold" mb={2}>
-            Nhận xét ({comments.length})
-          </Typography>
-
-          {commentsLoading ? (
-            <Stack spacing={2}>
-              {[1, 2, 3].map((i) => (
-                <Card key={i} variant="outlined">
-                  <CardContent>
-                    <Skeleton width="40%" height={25} />
-                    <Skeleton width="100%" height={50} sx={{ mt: 1 }} />
-                  </CardContent>
-                </Card>
-              ))}
-            </Stack>
-          ) : comments.length === 0 ? (
-            <Alert severity="info">
-              Chưa có đánh giá nào cho sản phẩm này. Hãy là người đầu tiên!
-            </Alert>
-          ) : (
-            <Box>
-              {comments.map((comment) => (
-                <CommentItem key={comment._id} comment={comment} />
-              ))}
-            </Box>
-          )}
-        </Box>
+        {commentsLoading ? (
+          <Stack spacing={1.5}>
+            {[1, 2].map((i) => (
+              <Card key={i} variant="outlined">
+                <CardContent sx={{ py: 1.5 }}>
+                  <Skeleton width="40%" height={20} />
+                  <Skeleton width="100%" height={40} sx={{ mt: 1 }} />
+                </CardContent>
+              </Card>
+            ))}
+          </Stack>
+        ) : comments.length === 0 ? (
+          <Alert severity="info" sx={{ py: 0.5 }}>
+            Chưa có đánh giá nào cho sản phẩm này. Hãy là người đầu tiên!
+          </Alert>
+        ) : (
+          <Box>
+            {comments.map((comment) => (
+              <CommentItem key={comment._id} comment={comment} />
+            ))}
+          </Box>
+        )}
       </Box>
     </Container>
   );

@@ -5,6 +5,7 @@ import api from "../../services/api";
 
 export default function PayPalCheckout({ onSuccess }) {
   const [message, setMessage] = useState("");
+  const [messageSeverity, setMessageSeverity] = useState("info");
   const [loading, setLoading] = useState(false);
   
   // State cho Snackbar (popup notification)
@@ -60,8 +61,9 @@ export default function PayPalCheckout({ onSuccess }) {
               throw new Error("Không tạo được order");
             } catch (err) {
               console.error("CreateOrder Error:", err);
-              const errorMsg = " Không thể tạo đơn hàng PayPal";
+              const errorMsg = "Không thể tạo đơn hàng PayPal";
               setMessage(errorMsg);
+              setMessageSeverity("error");
               showPopup(errorMsg, "error");
               throw err;
             } finally {
@@ -80,19 +82,22 @@ export default function PayPalCheckout({ onSuccess }) {
               if (res.data.status === 200) {
                 const successMsg = " Thanh toán thành công!";
                 setMessage(successMsg);
+                setMessageSeverity("success");
                 showPopup(successMsg, "success");
                 
                 // Chờ 1.5 giây rồi gọi callback onSuccess
                 setTimeout(() => onSuccess?.(), 1500);
               } else {
-                const errorMsg = " " + res.data.result;
+                const errorMsg = "" + res.data.result;
                 setMessage(errorMsg);
+                setMessageSeverity("error");
                 showPopup(errorMsg, "error");
               }
             } catch (err) {
               console.error("OnApprove Error:", err);
-              const errorMsg = " Lỗi khi xác nhận thanh toán";
+              const errorMsg = "Lỗi khi xác nhận thanh toán";
               setMessage(errorMsg);
+              setMessageSeverity("error");
               showPopup(errorMsg, "error");
             } finally {
               setLoading(false);
@@ -110,12 +115,16 @@ export default function PayPalCheckout({ onSuccess }) {
                 await api.post(`/order/cancel/${data.orderID}`);
               }
               
-              const cancelMsg = " Bạn đã hủy thanh toán";
+              const cancelMsg = "Bạn đã hủy thanh toán";
               setMessage(cancelMsg);
+              setMessageSeverity("warning");
               showPopup(cancelMsg, "warning");
             } catch (err) {
               console.error("OnCancel Error:", err);
-              showPopup(" Đã hủy thanh toán (có lỗi khi gọi API cancel)", "warning");
+              const warnMsg = "Đã hủy thanh toán (có lỗi khi gọi API cancel)";
+              setMessage(warnMsg);
+              setMessageSeverity("warning");
+              showPopup(warnMsg, "warning");
             } finally {
               setLoading(false);
             }
@@ -134,10 +143,14 @@ export default function PayPalCheckout({ onSuccess }) {
               
               const errorMsg = "Có lỗi xảy ra với PayPal";
               setMessage(errorMsg);
+              setMessageSeverity("error");
               showPopup(errorMsg, "error");
             } catch (cancelErr) {
               console.error("Error calling cancel API:", cancelErr);
-              showPopup(" Lỗi PayPal (không thể gọi API cancel)", "error");
+              const errMsg = "Lỗi PayPal (không thể gọi API cancel)";
+              setMessage(errMsg);
+              setMessageSeverity("error");
+              showPopup(errMsg, "error");
             } finally {
               setLoading(false);
             }
@@ -147,11 +160,7 @@ export default function PayPalCheckout({ onSuccess }) {
         {/* Alert hiển thị bên dưới nút PayPal */}
         {message && (
           <Alert 
-            severity={
-              message.includes("") ? "success" : 
-              message.includes("") ? "warning" : 
-              "error"
-            } 
+            severity={messageSeverity}
             sx={{ mt: 2 }}
           >
             {message}
@@ -164,6 +173,10 @@ export default function PayPalCheckout({ onSuccess }) {
           autoHideDuration={4000}
           onClose={handleCloseSnackbar}
           anchorOrigin={{ vertical: "top", horizontal: "right" }}
+          sx={{ 
+            top: '80px !important',
+            zIndex: 9999
+          }}
         >
           <Alert 
             onClose={handleCloseSnackbar} 

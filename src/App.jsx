@@ -15,9 +15,8 @@ import EbookDetail from './modules/client/page/EbookDetail';
 import Cart from './modules/client/page/Cart';
 import Login from './modules/client/page/Login';
 import Checkout from './modules/client/page/Checkout';
-import Profile from './modules/client/page/profile';
+import Profile from './modules/client/page/Profile';
 
-// Admin layout & pages
 import AdminRoutes from './modules/admin/routes/AdminRoutes';
 
 const theme = createTheme({
@@ -72,7 +71,6 @@ function AppRoutes() {
         />
         <Route path="/profile" element={<Profile />} />
          <Route index element={<Home />} />
-        {/* <Route path="categories" element={<Category />} /> */}
         <Route path="ebook/:id" element={<EbookDetail />} />
         <Route path="cart" element={<Cart />} />
         <Route path="checkout" element={<Checkout />} />

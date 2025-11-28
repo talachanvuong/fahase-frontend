@@ -6,28 +6,16 @@ const backend =
 
 const api = axios.create({
   baseURL: `${backend}/api`,
-  // Ensure cookies (session) are sent with requests so backend can read connect.sid
   withCredentials: true,
 });
 
-// Prevent browser 304 empty bodies by cache-busting GET requests
-api.interceptors.request.use((config) => {
-  if (config.method?.toLowerCase() === 'get') {
-    const params = new URLSearchParams(config.params || {})
-    params.set('_t', String(Date.now()))
-    config.params = Object.fromEntries(params)
-    // Also disable cache explicitly
-    config.headers = { ...(config.headers || {}), 'Cache-Control': 'no-cache' }
-  }
-  return config
-})
+
+api.defaults.params = {};
 
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // Do not auto-redirect; let UI decide
-    }
+    if (error.response?.status === 401) 
     return Promise.reject(error);
   }
 );

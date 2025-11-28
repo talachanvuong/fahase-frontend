@@ -6,8 +6,7 @@ import { useAuth } from "../../../hook/useAuth";
 import { useNavigate } from "react-router-dom";
 
 export default function Login() {
-  const { login } = useAuth();
-  const { user, loading } = useAuth();
+  const { loginUser, user, loading } = useAuth();
   const navigate = useNavigate();
 
    useEffect(() => {
@@ -46,7 +45,7 @@ export default function Login() {
           <Button
             variant="contained"
             color="primary"
-            onClick={() => login()}
+            onClick={() => loginUser()}
             startIcon={<GoogleIcon />}
             fullWidth
             size="large"

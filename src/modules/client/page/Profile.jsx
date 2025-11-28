@@ -1,31 +1,6 @@
 import React, { useState, useEffect } from "react";
-import {
-  Container,
-  Box,
-  Avatar,
-  Typography,
-  Tabs,
-  Tab,
-  Card,
-  CardContent,
-  Grid,
-  Chip,
-  Divider,
-  Stack,
-  Paper,
-  List,
-  ListItem,
-  ListItemText,
-  Button,
-  Skeleton
-} from "@mui/material";
-import {
-  Person,
-  Receipt,
-  ShoppingBag,
-  Email,
-  AccountCircle
-} from "@mui/icons-material";
+import {Container, Box, Avatar, Typography, Tabs, Tab, Card, CardContent, Grid, Chip, Divider, Stack, Paper, List, ListItem, ListItemText, Button, Skeleton} from "@mui/material";
+import {Person, Receipt, Email, AccountCircle} from "@mui/icons-material";
 import { useAuth } from "../../../hook/useAuth";
 import api from "../../../services/api";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -387,120 +362,6 @@ const OrdersTab = () => {
     </Stack>
   );
 };
-// ============ TAB 3: SẢN PHẨM ĐÃ MUA ============
-const PurchasedProductsTab = () => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const loadPurchasedProducts = async () => {
-      try {
-        const res = await api.get("/bought/isBought/");
-        if (res.data.status === 200) {
-          setProducts(res.data.result || []);
-        }
-      } catch (error) {
-        console.error("Load purchased products error:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadPurchasedProducts();
-  }, []);
-
-  if (loading) {
-    return (
-      <Grid container spacing={2}>
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-          <Grid item xs={12} sm={6} md={4} key={i}>
-            <Card>
-              <Skeleton variant="rectangular" sx={{ aspectRatio: '1/1' }} />
-              <CardContent>
-                <Skeleton height={30} />
-                <Skeleton height={20} sx={{ mt: 1 }} />
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-    );
-  }
-
-  if (products.length === 0) {
-    return (
-      <Paper elevation={2} sx={{ p: 6, textAlign: 'center', borderRadius: 3 }}>
-        <ShoppingBag sx={{ fontSize: 80, color: 'text.secondary', mb: 2 }} />
-        <Typography variant="h5" fontWeight="bold" gutterBottom>
-          Chưa mua sản phẩm nào
-        </Typography>
-        <Typography color="text.secondary" sx={{ mb: 3 }}>
-          Khám phá cửa hàng và tìm những sản phẩm yêu thích của bạn!
-        </Typography>
-        <Button variant="contained" href="/">
-          Mua sắm ngay
-        </Button>
-      </Paper>
-    );
-  }
-
-  return (
-    <Grid container spacing={2.5}>
-      {products.map((product) => (
-        <Grid item xs={12} sm={6} md={4} key={product._id}>
-          <Card 
-            sx={{ 
-              cursor: 'pointer', 
-              height: '100%',
-              transition: 'all 0.3s',
-              '&:hover': { 
-                boxShadow: 6,
-                transform: 'translateY(-4px)'
-              } 
-            }}
-            onClick={() => navigate(`/product/getById/${product._id}`)}
-          >
-            <Box
-              component="img"
-              src={product.thumbnail}
-              alt={product.title}
-              sx={{ 
-                width: '100%', 
-                aspectRatio: '1/1', 
-                objectFit: 'cover',
-                bgcolor: 'grey.100'
-              }}
-            />
-            <CardContent>
-              <Typography 
-                variant="subtitle1" 
-                fontWeight="bold" 
-                sx={{ 
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  minHeight: 48
-                }}
-              >
-                {product.title}
-              </Typography>
-              <Typography variant="h6" color="primary" fontWeight="bold" sx={{ mt: 1 }}>
-                {product.price?.toLocaleString()} ₫
-              </Typography>
-              {product.purchasedAt && (
-                <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-                  🛒 Mua ngày {new Date(product.purchasedAt).toLocaleDateString('vi-VN')}
-                </Typography>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
-      ))}
-    </Grid>
-  );
-};
 
 // ============ MAIN PROFILE COMPONENT ============
 export default function Profile() {
@@ -543,7 +404,7 @@ export default function Profile() {
           👤 Trang cá nhân
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Quản lý thông tin, đơn hàng và sản phẩm của bạn
+          Quản lý thông tin và đơn hàng của bạn
         </Typography>
       </Box>
 
@@ -564,20 +425,14 @@ export default function Profile() {
           <Tab 
             icon={<Person />} 
             iconPosition="start" 
-            label="Thông tin" 
+            label="Thông tin cá nhân" 
             value="info" 
           />
           <Tab 
             icon={<Receipt />} 
             iconPosition="start" 
-            label="Đơn hàng" 
+            label="Đơn hàng của tôi" 
             value="orders" 
-          />
-          <Tab 
-            icon={<ShoppingBag />} 
-            iconPosition="start" 
-            label="Đã mua" 
-            value="purchased" 
           />
         </Tabs>
       </Box>
@@ -586,7 +441,6 @@ export default function Profile() {
       <Box>
         {activeTab === "info" && <UserInfoTab user={user} />}
         {activeTab === "orders" && <OrdersTab />}
-        {activeTab === "purchased" && <PurchasedProductsTab />}
       </Box>
     </Container>
   );
