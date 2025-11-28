@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
-import {Box, Grid, Typography, Pagination, Stack, Container, Tabs, Tab, Skeleton, Card, CardContent, CardActions, useTheme, IconButton, Drawer, Paper, Divider, Chip } from "@mui/material";
-import { Menu, Close, LocalOffer, TrendingUp, Favorite, CardGiftcard, AcUnit } from "@mui/icons-material";
+import {Box, Grid, Typography, Pagination, Stack, Container, Tabs, Tab, Skeleton, Card, CardContent, CardActions, useTheme, IconButton, Drawer, Paper, Divider, Chip, Button } from "@mui/material";
+import { Menu, Close, LocalOffer, TrendingUp, Favorite, CardGiftcard, AcUnit, ArrowForward } from "@mui/icons-material";
 import ProductCard from "../../../components/ProductCard";
 import api from "../../../services/api";
 
@@ -344,31 +344,33 @@ export default function Home() {
         <PromoBanner />
 
         {/* Header với nút menu */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-          <IconButton 
-            color="primary" 
-            onClick={() => setSidebarOpen(true)}
-            sx={{ 
-              border: 1, 
-              borderColor: 'primary.main',
-              '&:hover': { bgcolor: 'primary.light', color: 'white' }
-            }}
-          >
-            <Menu />
-          </IconButton>
-          
-          <Typography variant="h5" fontWeight="bold">
-            🎁 Sản phẩm nổi bật
-          </Typography>
-          
-          {selectedCategory && (
-            <Chip 
-              label={categories.find(c => c._id === selectedCategory)?.title || ''} 
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <IconButton 
               color="primary" 
-              onDelete={() => {}}
-              deleteIcon={<></>}
-            />
-          )}
+              onClick={() => setSidebarOpen(true)}
+              sx={{ 
+                border: 1, 
+                borderColor: 'primary.main',
+                '&:hover': { bgcolor: 'primary.light', color: 'white' }
+              }}
+            >
+              <Menu />
+            </IconButton>
+            
+            <Typography variant="h5" fontWeight="bold">
+              🎁 Sản phẩm nổi bật
+            </Typography>
+            
+            {selectedCategory && (
+              <Chip 
+                label={categories.find(c => c._id === selectedCategory)?.title || ''} 
+                color="primary" 
+                onDelete={() => {}}
+                deleteIcon={<></>}
+              />
+            )}
+          </Box>
         </Box>
 
         {/* Tabs danh mục (hiển thị trên desktop) */}

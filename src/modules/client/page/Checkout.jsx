@@ -3,12 +3,27 @@ import {Container, Box, Typography, Paper, Grid, Divider, Stack, Button, List, L
 import { ArrowBack, ShoppingCart } from "@mui/icons-material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useCart } from "../../../hook/useCart";
+import { useAuth } from "../../../hook/useAuth";
 import PayPalCheckout from "../../../components/paypal/PayPalCheckout";
 
 export default function Checkout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, loading } = useAuth();
   const { cartItems, clearCart } = useCart();
+
+  // Nếu đang load, hiển thị loading
+  if (loading) {
+    return <div>Đang tải...</div>;
+  }
+
+  // Nếu chưa login, redirect sang login
+  if (!user) {
+    useEffect(() => {
+      navigate('/login', { replace: true });
+    }, [user, navigate]);
+    return null;
+  }
 
   // Lấy thông tin sản phẩm "Mua ngay" từ state (nếu có)
   const buyNowProduct = location.state?.product;

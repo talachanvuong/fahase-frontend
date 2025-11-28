@@ -48,7 +48,6 @@ function ProtectedRoute({ children, requiredRole }) {
 }
 
 function AppRoutes() {
-  const { user, loading } = useAuth();
   return (
     <Routes>
       {/* Admin routes */}
@@ -57,23 +56,17 @@ function AppRoutes() {
       {/* Client routes */}
       <Route path="/login" element={<Login />} />
       <Route element={<ClientLayout />}>
-        <Route
-          index
-          element={
-            loading ? (
-              <div>Đang tải...</div>
-            ) : user ? (
-              <Home />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        />
-        <Route path="/profile" element={<Profile />} />
-         <Route index element={<Home />} />
+        {/* Home - Public, không cần login */}
+        <Route index element={<Home />} />
+        
+        {/* Public pages - không cần login */}
+        <Route path="category/:categoryId" element={<Category />} />
         <Route path="ebook/:id" element={<EbookDetail />} />
-        <Route path="cart" element={<Cart />} />
-        <Route path="checkout" element={<Checkout />} />
+        
+        {/* Protected pages - cần login */}
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+        <Route path="checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
       </Route>
 
       {/* Fallback */}

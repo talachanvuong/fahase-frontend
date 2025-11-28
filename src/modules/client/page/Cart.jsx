@@ -14,6 +14,7 @@ import {
 import PayPalCheckout from "../../../components/paypal/PayPalCheckout";
 import { Delete, ShoppingCartCheckout } from "@mui/icons-material";
 import { useCart } from "../../../hook/useCart";
+import { useAuth } from "../../../hook/useAuth";
 import { useNavigate } from "react-router-dom"; 
 
 const CartItemDisplay = ({ item, removeFromCart, theme }) => {
@@ -68,9 +69,20 @@ const CartItemDisplay = ({ item, removeFromCart, theme }) => {
 };
 
 export default function Cart() {
+  const { user, loading } = useAuth();
   const { cartItems, removeFromCart, clearCart } = useCart(); 
   const navigate = useNavigate();
   const theme = useTheme();
+
+  // Nếu đang load, hiển thị loading
+  if (loading) {
+    return <div>Đang tải...</div>;
+  }
+
+  // Nếu chưa login, redirect sang login
+  if (!user) {
+    return navigate('/login', { replace: true });
+  }
 
   const subTotal = cartItems.reduce((sum, item) => sum + (item.price || 0), 0);
   
