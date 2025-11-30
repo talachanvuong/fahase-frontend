@@ -6,6 +6,7 @@ import {
   Button,
   CircularProgress,
   Typography,
+  Alert,
 } from "@mui/material";
 import api from "../../../../services/api";
 
@@ -17,27 +18,23 @@ export default function ProductEdit() {
     title: "",
     price: "",
     description: "",
-    thumbnail: null,
-    file: null,
   });
   const [original, setOriginal] = useState({});
   const [loading, setLoading] = useState(true);
   const [previewThumbnail, setPreviewThumbnail] = useState(null);
   const [previewFileName, setPreviewFileName] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
 
-  // ============ LOAD PRODUCT ============
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const res = await api.get(`/product/getByIdByAdmin/${productId}`);
-        const p = res.data.result;
+        const { data } = await api.get(`/product/getByIdByAdmin/${productId}`);
+        const p = data.result;
 
         setForm({
           title: p.title ?? "",
           price: p.price ?? "",
           description: p.description ?? "",
-          thumbnail: null,
-          file: null,
         });
 
         setOriginal({
@@ -48,8 +45,13 @@ export default function ProductEdit() {
 
         setPreviewThumbnail(p.thumbnail);
         setPreviewFileName(p.file?.split("/").pop() ?? null);
-      } catch {
-        alert("Không tải được dữ liệu sản phẩm");
+      } catch (err) {
+        console.error(err);
+        setErrorMessage(
+          err.response?.data?.result ||
+            err.response?.data?.message ||
+            "Không tải được dữ liệu sản phẩm"
+        );
       } finally {
         setLoading(false);
       }
@@ -58,55 +60,53 @@ export default function ProductEdit() {
     fetchProduct();
   }, [productId]);
 
-  // ============ HANDLE INPUT ============
   const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    if (files) {
-      if (name === "thumbnail") {
-        setForm({ ...form, thumbnail: files[0] });
-        setPreviewThumbnail(URL.createObjectURL(files[0]));
-      } else if (name === "file") {
-        setForm({ ...form, file: files[0] });
-        setPreviewFileName(files[0].name);
-      }
-    } else {
-      setForm({ ...form, [name]: value });
-    }
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ============ SUBMIT UPDATE ============
   const handleSubmit = async () => {
     try {
-      const payload = new FormData();
+      setErrorMessage(null);
+      const payload = {};
+      let hasChange = false;
 
-      // chỉ gửi field khác gốc hoặc file mới
-      if (form.title !== original.title) payload.append("title", form.title);
-      if (Number(form.price) !== Number(original.price))
-        payload.append("price", Number(form.price));
-      if (form.description !== original.description)
-        payload.append("description", form.description);
-      if (form.thumbnail) payload.append("thumbnail", form.thumbnail);
-      if (form.file) payload.append("file", form.file);
+      ["title", "description"].forEach((key) => {
+        if (form[key] !== original[key]) {
+          payload[key] = form[key];
+          hasChange = true;
+        }
+      });
 
-      if (payload.keys().next().done) {
-        alert("Bạn chưa thay đổi gì cả");
+      if (form.price !== original.price) {
+        const priceNumber = Number(form.price);
+        if (isNaN(priceNumber)) {
+          setErrorMessage("Giá phải là số hợp lệ");
+          return;
+        }
+        payload.price = priceNumber;
+        hasChange = true;
+      }
+
+      if (!hasChange) {
+        setErrorMessage("Bạn chưa thay đổi gì cả");
         return;
       }
 
-      await api.patch(`/product/update/${productId}`, payload, {
-        headers: { "Content-Type": "multipart/form-data" },
+      const res = await api.patch(`/product/update/${productId}`, payload, {
+        headers: { "Content-Type": "application/json" },
       });
 
-      alert("Cập nhật thành công!");
+      alert(res.data.result || "Cập nhật thành công!");
       navigate(`/admin/categories/${categoryId}/products`);
-    } catch (e) {
-      alert(e.response?.data?.result || e.response?.data?.message || "Lỗi khi cập nhật sản phẩm");
+    } catch (err) {
+      console.error("Update error:", err);
+      setErrorMessage("Vui lòng sửa thông tin sản phẩm hợp lệ");
     }
   };
 
-  // ============ CANCEL ============
   const handleCancel = () => {
-    navigate(`/admin/categories/${categoryId}/products/${productId}`);
+    navigate(`/admin/categories/${categoryId}/products`);
   };
 
   if (loading) return <CircularProgress />;
@@ -116,6 +116,12 @@ export default function ProductEdit() {
       <Typography variant="h5" mb={2}>
         Chỉnh sửa sản phẩm
       </Typography>
+
+      {errorMessage && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {errorMessage}
+        </Alert>
+      )}
 
       <TextField
         fullWidth
@@ -147,7 +153,6 @@ export default function ProductEdit() {
         sx={{ mb: 2 }}
       />
 
-      {/* Thumbnail */}
       <Box sx={{ mb: 2 }}>
         {previewThumbnail && (
           <img
@@ -156,13 +161,10 @@ export default function ProductEdit() {
             style={{ width: 120, height: 120, objectFit: "cover", marginBottom: 8 }}
           />
         )}
-        <input type="file" name="thumbnail" onChange={handleChange} />
       </Box>
 
-      {/* File */}
       <Box sx={{ mb: 2 }}>
         {previewFileName && <Typography>File hiện tại: {previewFileName}</Typography>}
-        <input type="file" name="file" onChange={handleChange} />
       </Box>
 
       <Box sx={{ display: "flex", gap: 2 }}>

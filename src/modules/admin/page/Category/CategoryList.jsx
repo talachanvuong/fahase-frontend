@@ -34,6 +34,16 @@ export default function CategoryList() {
     fetchCategories();
   }, []);
 
+  const getErrorMessage = (err) => {
+    const data = err?.response?.data;
+    return (
+      data?.message ||
+      data?.error ||
+      data?.errors?.[0] ||
+      "Lỗi server xảy ra"
+    );
+  };
+
   // Thêm category
   const handleAddSubmit = async (e) => {
     e.preventDefault();
@@ -41,12 +51,13 @@ export default function CategoryList() {
 
     try {
       await api.post("/category/add", { title: newTitle });
+
       await fetchCategories();
       setNewTitle("");
       setShowAddForm(false);
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || "Lỗi server khi thêm loại");
+      alert(getErrorMessage(err));
     }
   };
 
@@ -59,7 +70,7 @@ export default function CategoryList() {
       setCategories((prev) => prev.filter((c) => c._id !== id));
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || "Lỗi server khi xóa");
+      alert(getErrorMessage(err));
     }
   };
 
